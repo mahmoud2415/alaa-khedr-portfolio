@@ -23,7 +23,8 @@ import {
   UploadCloud,
   Check,
   Star,
-  Loader2
+  Loader2,
+  Settings
 } from 'lucide-react';
 
 // Helper: Compress image to optimized JPEG Data URL via HTML5 Canvas
@@ -67,7 +68,9 @@ export default function AdminPage() {
     deleteProject, 
     saveFolder, 
     deleteFolder, 
-    seedSampleData 
+    seedSampleData,
+    bannerProjectIds,
+    saveBannerSettings
   } = usePortfolio();
 
   // Authentication State
@@ -77,6 +80,8 @@ export default function AdminPage() {
 
   // Tabs: 'projects' | 'folders'
   const [activeTab, setActiveTab] = useState("projects");
+  const [selectedBannerProjects, setSelectedBannerProjects] = useState([]);
+  const [bannerSaveStatus, setBannerSaveStatus] = useState("");
 
   // Project Modal State
   const [projectModalOpen, setProjectModalOpen] = useState(false);
@@ -116,6 +121,10 @@ export default function AdminPage() {
     const session = sessionStorage.getItem("wood_admin_auth");
     if (session === "true") setIsAuthenticated(true);
   }, []);
+
+  useEffect(() => {
+    setSelectedBannerProjects(bannerProjectIds);
+  }, [bannerProjectIds]);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -347,6 +356,7 @@ export default function AdminPage() {
             >
               تسجيل الدخول
             </button>
+
           </form>
 
           <Link to="/" className="inline-block mt-4 text-xs text-wood-muted hover:text-wood-cream">
@@ -417,6 +427,7 @@ export default function AdminPage() {
               <FolderTree className="w-4 h-4" />
               <span>الفولدرات والأقسام ({folders.length})</span>
             </button>
+
           </div>
 
           {/* 1-Click Seed Button */}
@@ -429,6 +440,16 @@ export default function AdminPage() {
           </button>
 
         </div>
+
+        <button
+          onClick={() => setActiveTab("banner")}
+          className={`mt-3 flex w-full items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
+            activeTab === "banner" ? "bg-wood-amber text-white shadow-lg shadow-wood-amber/20" : "bg-wood-850 text-wood-muted hover:text-wood-cream border border-wood-700/60"
+          }`}
+        >
+          <Settings className="w-4 h-4" />
+          <span>إعدادات البانر - اختيار المشاريع الظاهرة في البانر</span>
+        </button>
 
         {seedStatus && (
           <div className="mt-4 p-3 rounded-xl bg-wood-gold/20 border border-wood-gold/40 text-wood-gold text-xs font-bold text-center">
@@ -469,6 +490,7 @@ export default function AdminPage() {
                         {proj.images.length} صور
                       </div>
                     )}
+
                   </div>
 
                   <h3 className="font-alexandria font-bold text-sm text-wood-cream line-clamp-1">{proj.title}</h3>
@@ -515,6 +537,80 @@ export default function AdminPage() {
 
               </div>
             ))}
+          </div>
+        </main>
+      )}
+
+      {activeTab === "banner" && (
+        <main className="max-w-6xl mx-auto px-4 pt-6">
+          <div className="glass-card rounded-2xl border border-wood-700/60 p-5">
+            <div className="mb-5">
+              <h2 className="font-alexandria font-bold text-base text-wood-cream">اختيار مشاريع البانر</h2>
+              <p className="text-xs text-wood-muted mt-1">
+                اختر المشاريع التي ستظهر في بانر الصفحة الرئيسية باستخدام صورة الغلاف الأولى لكل مشروع.
+              </p>
+            </div>
+
+            {projects.length === 0 ? (
+              <p className="text-sm text-wood-muted text-center py-8">لا توجد مشاريع متاحة للاختيار.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {projects.map((project) => {
+                  const isSelected = selectedBannerProjects.includes(project.id);
+                  return (
+                    <label
+                      key={project.id}
+                      className={`cursor-pointer rounded-xl overflow-hidden border transition-colors ${
+                        isSelected ? "border-wood-amber ring-1 ring-wood-amber/50" : "border-wood-700/60"
+                      }`}
+                    >
+                      <div className="relative aspect-[16/9] bg-wood-900">
+                        <img
+                          src={project.images?.[0]}
+                          alt={project.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => setSelectedBannerProjects((current) =>
+                            isSelected
+                              ? current.filter(id => id !== project.id)
+                              : [...current, project.id]
+                          )}
+                          className="absolute top-2 right-2 w-5 h-5 accent-wood-amber"
+                        />
+                      </div>
+                      <div className="p-3 bg-wood-850">
+                        <p className="text-xs font-bold text-wood-cream line-clamp-2">{project.title}</p>
+                        <span className="text-[10px] text-wood-amber">#{project.code || project.id}</span>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-wood-700/50">
+              <span className="text-xs text-wood-muted">{selectedBannerProjects.length} مشروع مختار</span>
+              <button
+                onClick={async () => {
+                  setBannerSaveStatus("جاري الحفظ...");
+                  try {
+                    await saveBannerSettings(selectedBannerProjects);
+                    setBannerSaveStatus("تم حفظ إعدادات البانر بنجاح");
+                  } catch (error) {
+                    console.error("Error saving banner settings:", error);
+                    setBannerSaveStatus("تعذر حفظ إعدادات البانر");
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white text-xs font-bold"
+              >
+                <Save className="w-4 h-4" />
+                حفظ الإعدادات
+              </button>
+            </div>
+            {bannerSaveStatus && <p className="text-xs text-wood-gold mt-3 text-left">{bannerSaveStatus}</p>}
           </div>
         </main>
       )}

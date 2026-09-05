@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 import FolderCard from '../components/portfolio/FolderCard';
@@ -19,10 +19,24 @@ import {
 } from 'lucide-react';
 
 export default function HomePage() {
-  const { folders, projects, craftsmanInfo, searchQuery, setSearchQuery, loading } = usePortfolio();
+  const { folders, projects, craftsmanInfo, searchQuery, setSearchQuery, loading, getBannerProjects } = usePortfolio();
   
   // Lightbox State
   const [lightboxData, setLightboxData] = useState({ isOpen: false, images: [], index: 0 });
+  const [bannerIndex, setBannerIndex] = useState(0);
+  const bannerProjects = getBannerProjects();
+
+  useEffect(() => {
+    if (bannerIndex >= bannerProjects.length) setBannerIndex(0);
+  }, [bannerIndex, bannerProjects.length]);
+
+  useEffect(() => {
+    if (bannerProjects.length < 2) return undefined;
+    const interval = window.setInterval(() => {
+      setBannerIndex((current) => (current + 1) % bannerProjects.length);
+    }, 5000);
+    return () => window.clearInterval(interval);
+  }, [bannerProjects.length]);
 
   const openLightbox = (images, index = 0) => {
     setLightboxData({ isOpen: true, images, index });
@@ -128,6 +142,34 @@ export default function HomePage() {
                 </a>
 
               </div>
+
+              {bannerProjects.length > 0 && (
+                <Link
+                  to={`/project/${bannerProjects[bannerIndex].id}`}
+                  className="mt-8 block relative overflow-hidden rounded-2xl border border-wood-amber/40 bg-wood-900/70 shadow-2xl"
+                >
+                  <img
+                    src={bannerProjects[bannerIndex].images?.[0]}
+                    alt={bannerProjects[bannerIndex].title}
+                    className="w-full h-48 sm:h-64 object-cover opacity-75"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                    <span className="text-[10px] text-wood-amber font-bold">من أعمالنا المختارة</span>
+                    <h2 className="text-base sm:text-xl font-bold text-white mt-1">{bannerProjects[bannerIndex].title}</h2>
+                    {bannerProjects.length > 1 && (
+                      <div className="flex gap-1.5 mt-3">
+                        {bannerProjects.map((project, index) => (
+                          <span
+                            key={project.id}
+                            className={`h-1.5 rounded-full transition-all ${index === bannerIndex ? "w-7 bg-wood-amber" : "w-2 bg-white/50"}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              )}
 
             </div>
 
