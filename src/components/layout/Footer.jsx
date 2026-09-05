@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { usePortfolio } from '../../context/PortfolioContext';
 import { 
   Phone, 
@@ -185,7 +186,13 @@ export default function Footer() {
         {/* Bottom Copyright */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-wood-muted/60">
           <p>© {new Date().getFullYear()} {craftsmanInfo.brandName} — جميع الحقوق محفوظة.</p>
-          <p>إدارة وتشغيل: فني دهانات أخشاب {craftsmanInfo.name}</p>
+          <Link
+            to="/admin"
+            className="text-[9px] text-wood-muted/30 hover:text-wood-muted/70 transition-colors"
+            aria-label="أدمن"
+          >
+            أدمن
+          </Link>
         </div>
 
       </div>

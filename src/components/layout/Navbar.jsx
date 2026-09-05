@@ -1,11 +1,10 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Phone, MessageCircle, MapPin, Search, Folder, ShieldCheck } from 'lucide-react';
+import { Phone, MessageCircle, MapPin, Search } from 'lucide-react';
 
 export default function Navbar() {
   const { craftsmanInfo, searchQuery, setSearchQuery } = usePortfolio();
-  const location = useLocation();
 
   return (
     <header className="sticky top-0 z-40 bg-[#0F0D0B]/90 backdrop-blur-md border-b border-wood-700/60 transition-all">
@@ -58,14 +57,6 @@ export default function Navbar() {
             <span>واتساب</span>
           </a>
 
-          {/* Admin Link */}
-          <Link
-            to="/admin"
-            className="p-2 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-muted hover:text-wood-cream border border-wood-700/60 transition-colors"
-            title="لوحة الإدارة"
-          >
-            <ShieldCheck className="w-4 h-4" />
-          </Link>
         </div>
 
       </div>
