@@ -137,6 +137,7 @@ export const PortfolioProvider = ({ children }) => {
   const [folders, setFolders] = useState([]);
   const [projects, setProjects] = useState([]);
   const [craftsmanInfo, setCraftsmanInfo] = useState(CRAFTSMAN_CONFIG);
+  const [bannerProjectIds, setBannerProjectIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -145,6 +146,7 @@ export const PortfolioProvider = ({ children }) => {
     let unsubFolders = () => {};
     let unsubProjects = () => {};
     let unsubInfo = () => {};
+    let unsubBanner = () => {};
 
     try {
       // Folders listener
@@ -186,6 +188,15 @@ export const PortfolioProvider = ({ children }) => {
         console.warn("Settings error:", err.message);
       });
 
+      unsubBanner = onSnapshot(doc(db, "settings", "banner_config"), (docSnap) => {
+        setBannerProjectIds(docSnap.exists() && Array.isArray(docSnap.data().projectIds)
+          ? docSnap.data().projectIds
+          : []);
+      }, (err) => {
+        console.warn("Banner settings error:", err.message);
+        setBannerProjectIds([]);
+      });
+
     } catch (e) {
       console.error("Firestore init error:", e);
       setFolders(CRAFTSMAN_CONFIG.defaultFolders);
@@ -197,6 +208,7 @@ export const PortfolioProvider = ({ children }) => {
       unsubFolders();
       unsubProjects();
       unsubInfo();
+      unsubBanner();
     };
   }, []);
 
@@ -226,6 +238,12 @@ export const PortfolioProvider = ({ children }) => {
 
   const getFeaturedProjects = () => {
     return projects.filter(p => p.isFeatured);
+  };
+
+  const getBannerProjects = () => {
+    return bannerProjectIds
+      .map(projectId => projects.find(project => project.id === projectId))
+      .filter(Boolean);
   };
 
   // ── Admin Actions (Firestore CRUD with timeout & Local Persistence) ─────────────────────────
@@ -278,6 +296,15 @@ export const PortfolioProvider = ({ children }) => {
     } catch (e) {
       console.warn("Delete firestore error:", e.message);
     }
+  };
+
+  const saveBannerSettings = async (projectIds) => {
+    await setDoc(doc(db, "settings", "banner_config"), {
+      projectIds,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    setBannerProjectIds(projectIds);
+    return { success: true };
   };
 
   // Add / Edit Folder
@@ -339,6 +366,9 @@ export const PortfolioProvider = ({ children }) => {
       getProjectsByFolder,
       getProjectByIdOrCode,
       getFeaturedProjects,
+      bannerProjectIds,
+      getBannerProjects,
+      saveBannerSettings,
       saveProject,
       deleteProject,
       saveFolder,

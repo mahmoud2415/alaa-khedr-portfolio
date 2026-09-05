@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export default function HomePage() {
-  const { folders, projects, craftsmanInfo, searchQuery, setSearchQuery, loading } = usePortfolio();
+  const { folders, projects, craftsmanInfo, searchQuery, setSearchQuery, loading, getBannerProjects } = usePortfolio();
   const navigate = useNavigate();
 
   // Hero Slider State
@@ -26,7 +26,7 @@ export default function HomePage() {
 
   // Lightbox State
   const [lightboxData, setLightboxData] = useState({ isOpen: false, images: [], index: 0 });
-
+  const [bannerIndex, setBannerIndex] = useState(0);
   const openLightbox = (images, index = 0) => {
     setLightboxData({ isOpen: true, images, index });
   };
@@ -47,7 +47,10 @@ export default function HomePage() {
     : [];
 
   const featuredProjects = projects.filter(p => p.isFeatured);
-  const sliderProjects = featuredProjects.length > 0 ? featuredProjects : projects.slice(0, 5);
+  const bannerProjects = getBannerProjects();
+  const sliderProjects = bannerProjects.length > 0
+    ? bannerProjects
+    : (featuredProjects.length > 0 ? featuredProjects : projects.slice(0, 5));
 
   // Auto slide effect
   useEffect(() => {
