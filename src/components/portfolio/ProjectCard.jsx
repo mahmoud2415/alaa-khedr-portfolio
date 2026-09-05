@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../../context/PortfolioContext';
 import { MessageCircle, Eye, Share2, ChevronLeft, ChevronRight, Tag, Sparkles } from 'lucide-react';
 
 export default function ProjectCard({ project, onOpenLightbox }) {
   const { craftsmanInfo } = usePortfolio();
+  const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const images = project.images && project.images.length > 0 
     ? project.images 
     : ["https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80"];
+
+  const goToProject = () => {
+    navigate(`/project/${project.id}`);
+  };
 
   const nextImage = (e) => {
     e.preventDefault();
@@ -23,14 +28,15 @@ export default function ProjectCard({ project, onOpenLightbox }) {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  // WhatsApp Inquiry URL with pre-filled custom message for this exact project
-  const waMessage = `السلام عليكم يا أسطى علاء،
-عاجبني الشغل ده وعايز استفسر عن تفاصيل دهانه وتكلفته:
-📌 *كود الشغل:* #${project.code || project.id}
-🛋️ *الاسم:* ${project.title}
-🎨 *نوع الدهان:* ${project.paintType || "دوكو / إستر"}
-${project.woodType ? `🪵 *نوع الخشب:* ${project.woodType}\n` : ""}
-رابط الصور على الموقع: ${window.location.origin}/project/${project.id}`;
+  // WhatsApp Inquiry URL with exact requested opening
+  const waMessage = `السلام عليكم، عايز استفسر عن تفاصيل وسعر الشغل ده:
+
+📋 *بيانات الشغل:*
+▪️ كود الشغل: #${project.code || project.id}
+▪️ اسم الموديل: ${project.title}
+${project.paintType ? `▪️ نوع الدهان والتشطيب: ${project.paintType}\n` : ""}${project.woodType ? `▪️ نوع الخشب: ${project.woodType}\n` : ""}${project.color ? `▪️ اللون واللمعان: ${project.color}\n` : ""}
+🔗 رابط الشغل:
+${window.location.origin}/project/${project.id}`;
 
   const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waMessage)}`;
 
@@ -54,7 +60,10 @@ ${project.woodType ? `🪵 *نوع الخشب:* ${project.woodType}\n` : ""}
   };
 
   return (
-    <div className="group rounded-2xl overflow-hidden glass-card hover:border-wood-amber/50 transition-all duration-300 shadow-xl flex flex-col justify-between bg-wood-850/90">
+    <div 
+      onClick={goToProject}
+      className="group rounded-2xl overflow-hidden glass-card hover:border-wood-amber/50 transition-all duration-300 shadow-xl flex flex-col justify-between bg-wood-850/90 cursor-pointer"
+    >
       
       {/* Image Carousel / Viewer */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-wood-900 group">
@@ -63,8 +72,7 @@ ${project.woodType ? `🪵 *نوع الخشب:* ${project.woodType}\n` : ""}
         <img
           src={images[currentImageIndex]}
           alt={project.title}
-          onClick={() => onOpenLightbox && onOpenLightbox(images, currentImageIndex)}
-          className="w-full h-full object-cover cursor-pointer group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
 
@@ -120,8 +128,12 @@ ${project.woodType ? `🪵 *نوع الخشب:* ${project.woodType}\n` : ""}
 
         {/* Quick View Button */}
         <button
-          onClick={() => onOpenLightbox && onOpenLightbox(images, currentImageIndex)}
-          className="absolute bottom-3 right-3 p-2 rounded-xl bg-black/60 hover:bg-black/90 text-white text-xs backdrop-blur-sm transition-all"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onOpenLightbox && onOpenLightbox(images, currentImageIndex);
+          }}
+          className="absolute bottom-3 right-3 p-2 rounded-xl bg-black/60 hover:bg-black/90 text-white text-xs backdrop-blur-sm transition-all z-10"
           title="تكبير الصورة"
         >
           <Eye className="w-4 h-4" />
@@ -130,7 +142,7 @@ ${project.woodType ? `🪵 *نوع الخشب:* ${project.woodType}\n` : ""}
         {/* Share Button */}
         <button
           onClick={handleShare}
-          className="absolute bottom-3 left-3 p-2 rounded-xl bg-black/60 hover:bg-black/90 text-white text-xs backdrop-blur-sm transition-all"
+          className="absolute bottom-3 left-3 p-2 rounded-xl bg-black/60 hover:bg-black/90 text-white text-xs backdrop-blur-sm transition-all z-10"
           title="مشاركة العمل"
         >
           <Share2 className="w-4 h-4" />
@@ -140,12 +152,10 @@ ${project.woodType ? `🪵 *نوع الخشب:* ${project.woodType}\n` : ""}
       {/* Card Content & Details */}
       <div className="p-4 flex-1 flex flex-col justify-between">
         <div>
-          {/* Title with link to details */}
-          <Link to={`/project/${project.id}`}>
-            <h3 className="font-alexandria font-bold text-sm sm:text-base text-wood-cream hover:text-wood-gold transition-colors line-clamp-2">
-              {project.title}
-            </h3>
-          </Link>
+          {/* Title */}
+          <h3 className="font-alexandria font-bold text-sm sm:text-base text-wood-cream group-hover:text-wood-gold transition-colors line-clamp-2">
+            {project.title}
+          </h3>
 
           {/* Description */}
           {project.desc && (
@@ -176,19 +186,24 @@ ${project.woodType ? `🪵 *نوع الخشب:* ${project.woodType}\n` : ""}
             href={waUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all active:scale-95"
+            onClick={(e) => e.stopPropagation()}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all active:scale-95 z-10"
           >
             <MessageCircle className="w-4 h-4 fill-white" />
             <span>استفسر عن هذا الشغل</span>
           </a>
 
-          <Link
-            to={`/project/${project.id}`}
-            className="p-2.5 rounded-xl bg-wood-800 hover:bg-wood-700 text-wood-cream border border-wood-700 transition-colors"
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              goToProject();
+            }}
+            className="p-2.5 rounded-xl bg-wood-800 hover:bg-wood-700 text-wood-cream border border-wood-700 transition-colors z-10"
             title="عرض التفاصيل"
           >
             <ChevronLeft className="w-4 h-4" />
-          </Link>
+          </button>
 
         </div>
 

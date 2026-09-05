@@ -9,7 +9,6 @@ import {
   MessageCircle, 
   Phone, 
   Share2, 
-  Clock, 
   Palette, 
   TreePine, 
   Sparkles,
@@ -51,14 +50,15 @@ export default function ProjectDetailsPage() {
     ? project.images 
     : ["https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80"];
 
-  // WhatsApp Message
-  const waMessage = `السلام عليكم يا أسطى علاء،
-عاجبني الشغل ده ومحتاج استفسر عن تفاصيل دهانه وتكلفته:
-📌 *كود الشغل:* #${project.code || project.id}
-🛋️ *الاسم:* ${project.title}
-🎨 *نوع الدهان:* ${project.paintType || "دوكو / إستر"}
-${project.woodType ? `🪵 *نوع الخشب:* ${project.woodType}\n` : ""}
-رابط الصور على الموقع: ${window.location.href}`;
+  // WhatsApp Inquiry Message with exact requested opening
+  const waMessage = `السلام عليكم، عايز استفسر عن تفاصيل وسعر الشغل ده:
+
+📋 *بيانات الشغل:*
+▪️ كود الشغل: #${project.code || project.id}
+▪️ اسم الموديل: ${project.title}
+${project.paintType ? `▪️ نوع الدهان والتشطيب: ${project.paintType}\n` : ""}${project.woodType ? `▪️ نوع الخشب: ${project.woodType}\n` : ""}${project.color ? `▪️ اللون واللمعان: ${project.color}\n` : ""}
+🔗 رابط الشغل:
+${window.location.href}`;
 
   const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waMessage)}`;
 
@@ -243,18 +243,6 @@ ${project.woodType ? `🪵 *نوع الخشب:* ${project.woodType}\n` : ""}
                   </div>
                   <p className="text-xs text-wood-cream font-medium">
                     {project.color}
-                  </p>
-                </div>
-              )}
-
-              {project.duration && (
-                <div className="p-3 rounded-xl bg-wood-850 border border-wood-700/60">
-                  <div className="flex items-center gap-1.5 text-wood-amber text-xs font-bold mb-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>مدة التنفيذ التقريبية</span>
-                  </div>
-                  <p className="text-xs text-wood-cream font-medium">
-                    {project.duration}
                   </p>
                 </div>
               )}

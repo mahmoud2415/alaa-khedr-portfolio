@@ -228,44 +228,55 @@ export const PortfolioProvider = ({ children }) => {
     return projects.filter(p => p.isFeatured);
   };
 
-  // ── Admin Actions (Firestore CRUD) ─────────────────────────
+  // ── Admin Actions (Firestore CRUD with timeout & Local Persistence) ─────────────────────────
 
   // Add / Edit Project
   const saveProject = async (projectData, projectId = null) => {
+    const defaultCode = projectData.code?.trim().toUpperCase() || `WOOD-${Math.floor(100 + Math.random() * 900)}`;
+    const finalProjectData = {
+      ...projectData,
+      code: defaultCode,
+      updatedAt: new Date().toISOString()
+    };
+
+    // Instant local state update for immediate feedback
+    if (projectId) {
+      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, ...finalProjectData } : p));
+    } else {
+      const tempId = `proj_${Date.now()}`;
+      setProjects(prev => [{ id: tempId, ...finalProjectData, createdAt: new Date().toISOString() }, ...prev]);
+    }
+
+    // Persist to Firestore with 4-second timeout to avoid hanging
     try {
-      if (projectId) {
-        await updateDoc(doc(db, "projects", projectId), {
-          ...projectData,
-          updatedAt: serverTimestamp()
-        });
-        return { success: true };
-      } else {
-        const code = projectData.code?.trim().toUpperCase() || `WOOD-${Math.floor(100 + Math.random() * 900)}`;
-        const docRef = await addDoc(collection(db, "projects"), {
-          ...projectData,
-          code,
-          createdAt: serverTimestamp()
-        });
-        return { success: true, id: docRef.id };
-      }
-    } catch (err) {
-      console.error("Error saving project:", err);
-      // Fallback local update
-      if (projectId) {
-        setProjects(prev => prev.map(p => p.id === projectId ? { ...p, ...projectData } : p));
-      } else {
-        const newProj = { id: `local_${Date.now()}`, ...projectData, code: projectData.code || `WOOD-${Date.now().toString().slice(-3)}` };
-        setProjects(prev => [newProj, ...prev]);
-      }
+      const firestorePromise = projectId
+        ? updateDoc(doc(db, "projects", projectId), {
+            ...finalProjectData,
+            updatedAt: serverTimestamp()
+          })
+        : addDoc(collection(db, "projects"), {
+            ...finalProjectData,
+            createdAt: serverTimestamp()
+          });
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Firestore timeout, saved locally")), 4000)
+      );
+
+      await Promise.race([firestorePromise, timeoutPromise]);
       return { success: true };
+    } catch (err) {
+      console.warn("Firestore sync warning (data preserved locally):", err.message);
+      return { success: true, localOnly: true };
     }
   };
 
   const deleteProject = async (projectId) => {
+    setProjects(prev => prev.filter(p => p.id !== projectId));
     try {
       await deleteDoc(doc(db, "projects", projectId));
     } catch (e) {
-      setProjects(prev => prev.filter(p => p.id !== projectId));
+      console.warn("Delete firestore error:", e.message);
     }
   };
 

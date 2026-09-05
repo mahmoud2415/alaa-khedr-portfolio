@@ -1,26 +1,29 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 import FolderCard from '../components/portfolio/FolderCard';
 import ProjectCard from '../components/portfolio/ProjectCard';
 import ImageLightbox from '../components/portfolio/ImageLightbox';
 import { 
-  Phone, 
-  MessageCircle, 
-  MapPin, 
   Sparkles, 
   Layers, 
-  CheckCircle2, 
-  ShieldCheck, 
-  Share2, 
-  ArrowLeft,
   Search,
-  Paintbrush
+  ChevronLeft,
+  ChevronRight,
+  Tag,
+  ArrowLeft,
+  Eye
 } from 'lucide-react';
 
 export default function HomePage() {
   const { folders, projects, craftsmanInfo, searchQuery, setSearchQuery, loading } = usePortfolio();
-  
+  const navigate = useNavigate();
+
+  // Hero Slider State
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
   // Lightbox State
   const [lightboxData, setLightboxData] = useState({ isOpen: false, images: [], index: 0 });
 
@@ -44,96 +47,148 @@ export default function HomePage() {
     : [];
 
   const featuredProjects = projects.filter(p => p.isFeatured);
+  const sliderProjects = featuredProjects.length > 0 ? featuredProjects : projects.slice(0, 5);
+
+  // Auto slide effect
+  useEffect(() => {
+    if (sliderProjects.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % sliderProjects.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [sliderProjects.length]);
+
+  // Touch Swipe for Mobile
+  const handleTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 40;
+    const isRightSwipe = distance < -40;
+
+    if (isLeftSwipe) {
+      // In RTL next slide
+      setCurrentSlide((prev) => (prev + 1) % sliderProjects.length);
+    } else if (isRightSwipe) {
+      setCurrentSlide((prev) => (prev - 1 + sliderProjects.length) % sliderProjects.length);
+    }
+  };
+
+  const prevSlide = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentSlide((prev) => (prev - 1 + sliderProjects.length) % sliderProjects.length);
+  };
+
+  const nextSlide = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentSlide((prev) => (prev + 1) % sliderProjects.length);
+  };
+
+  const currentProj = sliderProjects[currentSlide];
+  const slideImage = currentProj?.images?.[0] || craftsmanInfo.coverImage || "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1600&q=80";
 
   return (
     <div className="min-h-screen pb-16">
       
-      {/* ── 1. HERO & CRAFTSMAN IDENTITY BANNER ────────────────────── */}
-      <section className="relative overflow-hidden border-b border-wood-700/60 bg-gradient-to-b from-wood-850 via-[#0F0D0B] to-[#0F0D0B]">
-        
-        {/* Background Cover Image */}
-        <div className="absolute inset-0 opacity-20 bg-cover bg-center mix-blend-overlay pointer-events-none"
-             style={{ backgroundImage: `url(${craftsmanInfo.coverImage || craftsmanInfo.avatar})` }}>
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0F0D0B] via-[#0F0D0B]/80 to-transparent"></div>
+      {/* ── 1. LUXURY EDITORIAL HERO SLIDER BANNER ────────────────────── */}
+      {!searchQuery && sliderProjects.length > 0 && (
+        <section className="relative w-full max-w-6xl mx-auto px-4 pt-4 sm:pt-6">
+          <div 
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            className="relative w-full aspect-[16/10] sm:aspect-[21/9] lg:aspect-[24/9] min-h-[280px] sm:min-h-[360px] rounded-3xl overflow-hidden shadow-2xl border border-wood-700/60 bg-wood-900 group"
+          >
+            {/* The Entire Banner is Clickable Link */}
+            <Link 
+              to={`/project/${currentProj.id}`}
+              className="block absolute inset-0 w-full h-full cursor-pointer"
+            >
+              {/* Slide Background Image with Smooth Fade Transition */}
+              <img
+                key={currentProj.id}
+                src={slideImage}
+                alt={currentProj.title}
+                className="w-full h-full object-cover transform scale-105 group-hover:scale-100 transition-transform duration-700 ease-out animate-fadeIn"
+              />
 
-        <div className="relative max-w-6xl mx-auto px-4 pt-8 pb-10">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-6 text-center md:text-right">
-            
-            {/* Craftsman Avatar */}
-            <div className="relative shrink-0">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-wood-amber shadow-2xl shadow-wood-amber/20">
-                <img 
-                  src={craftsmanInfo.avatar} 
-                  alt={craftsmanInfo.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-1.5 rounded-full shadow-lg border-2 border-wood-900" title="موثق ومتاح للعمل">
-                <CheckCircle2 className="w-4 h-4 fill-emerald-500 text-wood-900" />
-              </div>
-            </div>
+              {/* High-End Dark Vignette & Gradient Overlays */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0F0D0B] via-[#0F0D0B]/40 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0F0D0B]/70 via-transparent to-transparent"></div>
 
-            {/* Craftsman Bio & Title */}
-            <div className="flex-1 space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-wood-amber/15 border border-wood-amber/30 text-wood-amber text-xs font-bold">
-                <Paintbrush className="w-3.5 h-3.5" />
-                <span>{craftsmanInfo.brandName}</span>
-              </div>
-
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black font-alexandria text-wood-cream">
-                {craftsmanInfo.name}
-              </h1>
-
-              <p className="text-xs sm:text-sm font-medium text-wood-amber">
-                {craftsmanInfo.title}
-              </p>
-
-              <p className="text-xs sm:text-sm text-wood-muted max-w-2xl leading-relaxed mx-auto md:mx-0">
-                {craftsmanInfo.bio}
-              </p>
-
-              {/* Quick Action Badges (Phone, WhatsApp, Maps) */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 pt-3">
+              {/* Corner Minimalist Content (Title & "اتفرج" Button Only) */}
+              <div className="absolute bottom-0 right-0 left-0 p-5 sm:p-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 
-                {/* Call */}
-                <a
-                  href={`tel:${craftsmanInfo.phone}`}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-cream border border-wood-700 font-bold text-xs shadow-md active:scale-95 transition-all"
-                >
-                  <Phone className="w-4 h-4 text-wood-amber" />
-                  <span dir="ltr">{craftsmanInfo.phoneDisplay}</span>
-                </a>
+                <div className="max-w-xl text-right">
+                  {/* Title Only */}
+                  <h2 className="text-lg sm:text-2xl lg:text-3xl font-black font-alexandria text-wood-cream drop-shadow-md line-clamp-2">
+                    {currentProj.title}
+                  </h2>
+                </div>
 
-                {/* WhatsApp */}
-                <a
-                  href={craftsmanInfo.whatsappDirectUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/25 active:scale-95 transition-all"
-                >
-                  <MessageCircle className="w-4 h-4 fill-white" />
-                  <span>تواصل عبر واتساب</span>
-                </a>
-
-                {/* Location */}
-                <a
-                  href={craftsmanInfo.googleMapsUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-muted hover:text-wood-cream border border-wood-700 text-xs font-medium transition-all"
-                >
-                  <MapPin className="w-4 h-4 text-wood-amber" />
-                  <span>فاقوس — الشرقية</span>
-                </a>
+                {/* "اتفرج" Action Button */}
+                <div className="shrink-0 self-start sm:self-end">
+                  <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-wood-amber hover:bg-wood-gold text-white font-alexandria font-bold text-xs sm:text-sm shadow-xl shadow-wood-amber/30 group-hover:scale-105 active:scale-95 transition-all">
+                    <span>اتفرج</span>
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  </div>
+                </div>
 
               </div>
+            </Link>
 
-            </div>
+            {/* Slider Navigation Arrows */}
+            {sliderProjects.length > 1 && (
+              <>
+                <button
+                  onClick={prevSlide}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 rounded-full bg-black/50 hover:bg-black/80 text-white/90 backdrop-blur-sm border border-white/10 shadow-lg opacity-0 group-hover:opacity-100 transition-all z-20"
+                  title="العمل السابق"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={nextSlide}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 rounded-full bg-black/50 hover:bg-black/80 text-white/90 backdrop-blur-sm border border-white/10 shadow-lg opacity-0 group-hover:opacity-100 transition-all z-20"
+                  title="العمل التالي"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                {/* Slider Dot Indicators */}
+                <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-black/60 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10">
+                  {sliderProjects.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setCurrentSlide(idx);
+                      }}
+                      className={`h-1.5 rounded-full transition-all ${
+                        idx === currentSlide ? 'bg-wood-amber w-6' : 'bg-white/40 hover:bg-white/70 w-2'
+                      }`}
+                      title={`انتقل للشريحة ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
 
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── 2. SEARCH RESULTS (IF SEARCHING) ────────────────────────── */}
       {searchQuery && (

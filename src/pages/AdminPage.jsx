@@ -26,35 +26,59 @@ import {
   Loader2
 } from 'lucide-react';
 
-// Helper: Compress image to optimized JPEG Data URL via HTML5 Canvas
-const compressImage = (file, maxWidth = 1200, quality = 0.82) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = () => {
-        const elem = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
+// Helper: Compress image to optimized JPEG Data URL via HTML5 Canvas (Fail-safe for Mobile & Large Photos)
+const compressImage = (file, maxWidth = 800, quality = 0.65) => {
+  return new Promise((resolve) => {
+    if (typeof file === 'string') return resolve(file);
 
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
+    const timeout = setTimeout(() => {
+      console.warn("Image compression timeout fallback");
+      resolve("");
+    }, 5000);
 
-        elem.width = width;
-        elem.height = height;
-        const ctx = elem.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
+    try {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          clearTimeout(timeout);
+          try {
+            const elem = document.createElement('canvas');
+            let width = img.width || 800;
+            let height = img.height || 600;
 
-        const dataUrl = elem.toDataURL('image/jpeg', quality);
-        resolve(dataUrl);
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+
+            elem.width = width;
+            elem.height = height;
+            const ctx = elem.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const dataUrl = elem.toDataURL('image/jpeg', quality);
+            resolve(dataUrl);
+          } catch (e) {
+            console.warn("Canvas export fallback:", e);
+            resolve(event.target?.result || "");
+          }
+        };
+        img.onerror = () => {
+          clearTimeout(timeout);
+          resolve(event.target?.result || "");
+        };
+        img.src = event.target?.result;
       };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
+      reader.onerror = () => {
+        clearTimeout(timeout);
+        resolve("");
+      };
+      reader.readAsDataURL(file);
+    } catch (e) {
+      clearTimeout(timeout);
+      resolve("");
+    }
   });
 };
 
@@ -82,6 +106,8 @@ export default function AdminPage() {
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
+  const [isSavingProject, setIsSavingProject] = useState(false);
+  const [projectFormError, setProjectFormError] = useState("");
   const [projectForm, setProjectForm] = useState({
     title: "",
     code: "",
@@ -100,6 +126,8 @@ export default function AdminPage() {
   const [folderModalOpen, setFolderModalOpen] = useState(false);
   const [editingFolder, setEditingFolder] = useState(null);
   const [isProcessingFolderImage, setIsProcessingFolderImage] = useState(false);
+  const [isSavingFolder, setIsSavingFolder] = useState(false);
+  const [folderFormError, setFolderFormError] = useState("");
   const [folderForm, setFolderForm] = useState({
     id: "",
     name: "",
@@ -108,7 +136,7 @@ export default function AdminPage() {
     subcategoriesText: "" // newline separated subcategory names
   });
 
-  // Seed notification
+  // Seed / Action notification toast
   const [seedStatus, setSeedStatus] = useState("");
 
   // Check existing session
@@ -138,6 +166,7 @@ export default function AdminPage() {
     const defaultFolder = folders[0]?.id || "bedrooms";
     const defaultSub = folders[0]?.subcategories?.[0]?.id || "";
     setEditingProject(null);
+    setProjectFormError("");
     setProjectForm({
       title: "",
       code: `WOOD-${Math.floor(100 + Math.random() * 900)}`,
@@ -156,6 +185,7 @@ export default function AdminPage() {
 
   const openEditProject = (proj) => {
     setEditingProject(proj);
+    setProjectFormError("");
     setProjectForm({
       title: proj.title || "",
       code: proj.code || "",
@@ -178,9 +208,10 @@ export default function AdminPage() {
     if (files.length === 0) return;
 
     setIsProcessingImages(true);
+    setProjectFormError("");
     try {
       const compressedList = await Promise.all(
-        files.map(file => compressImage(file, 1200, 0.82))
+        files.map(file => compressImage(file, 850, 0.68))
       );
       setProjectForm(prev => ({
         ...prev,
@@ -188,7 +219,7 @@ export default function AdminPage() {
       }));
     } catch (err) {
       console.error("Error compressing images:", err);
-      alert("حدث خطأ أثناء معالجة بعض الصور.");
+      setProjectFormError("حدث خطأ أثناء معالجة الصور من الجهاز.");
     } finally {
       setIsProcessingImages(false);
       e.target.value = ""; // reset input
@@ -215,30 +246,51 @@ export default function AdminPage() {
 
   const handleSaveProject = async (e) => {
     e.preventDefault();
-    if (!projectForm.title.trim()) return alert("يرجى كتابة اسم العمل");
-    if (projectForm.images.length === 0) return alert("يرجى اختيار صورة واحدة على الأقل للعمل من جهازك");
+    setProjectFormError("");
+
+    if (!projectForm.title.trim()) {
+      setProjectFormError("يرجى كتابة اسم العمل / الموديل");
+      return;
+    }
+
+    let finalImages = projectForm.images;
+    // If user didn't upload any picture, assign a luxury default sample image
+    if (finalImages.length === 0) {
+      finalImages = ["https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1200&q=80"];
+    }
 
     const projectData = {
       title: projectForm.title.trim(),
-      code: projectForm.code.trim().toUpperCase(),
+      code: projectForm.code.trim().toUpperCase() || `WOOD-${Math.floor(100 + Math.random() * 900)}`,
       desc: projectForm.desc.trim(),
-      folderId: projectForm.folderId,
-      subcategoryId: projectForm.subcategoryId,
-      paintType: projectForm.paintType.trim(),
-      woodType: projectForm.woodType.trim(),
-      color: projectForm.color.trim(),
-      duration: projectForm.duration.trim(),
-      isFeatured: projectForm.isFeatured,
-      images: projectForm.images
+      folderId: projectForm.folderId || folders[0]?.id || "bedrooms",
+      subcategoryId: projectForm.subcategoryId || "",
+      paintType: projectForm.paintType.trim() || "دوكو فرن",
+      woodType: projectForm.woodType.trim() || "خشب زان",
+      color: projectForm.color.trim() || "طبيعي",
+      duration: projectForm.duration.trim() || "10 أيام",
+      isFeatured: !!projectForm.isFeatured,
+      images: finalImages
     };
 
-    await saveProject(projectData, editingProject?.id);
-    setProjectModalOpen(false);
+    setIsSavingProject(true);
+    try {
+      await saveProject(projectData, editingProject?.id);
+      setSeedStatus("✅ تم حفظ العمل بنجاح ونشره في المعرض!");
+      setTimeout(() => setSeedStatus(""), 4000);
+      setProjectModalOpen(false);
+    } catch (err) {
+      console.error("Error in handleSaveProject:", err);
+      setProjectFormError("حدث خطأ أثناء الحفظ: " + (err.message || "حاول مجدداً"));
+    } finally {
+      setIsSavingProject(false);
+    }
   };
 
   // ── Folder Modal Handlers ────────────────────────────────
   const openAddFolder = () => {
     setEditingFolder(null);
+    setFolderFormError("");
     setFolderForm({
       id: "",
       name: "",
@@ -251,6 +303,7 @@ export default function AdminPage() {
 
   const openEditFolder = (folder) => {
     setEditingFolder(folder);
+    setFolderFormError("");
     setFolderForm({
       id: folder.id,
       name: folder.name || "",
@@ -267,12 +320,13 @@ export default function AdminPage() {
     if (!file) return;
 
     setIsProcessingFolderImage(true);
+    setFolderFormError("");
     try {
-      const dataUrl = await compressImage(file, 1000, 0.82);
+      const dataUrl = await compressImage(file, 850, 0.68);
       setFolderForm(prev => ({ ...prev, image: dataUrl }));
     } catch (err) {
       console.error("Error compressing folder image:", err);
-      alert("حدث خطأ أثناء معالجة صورة الفولدر.");
+      setFolderFormError("حدث خطأ أثناء معالجة صورة الفولدر.");
     } finally {
       setIsProcessingFolderImage(false);
       e.target.value = "";
@@ -281,7 +335,12 @@ export default function AdminPage() {
 
   const handleSaveFolder = async (e) => {
     e.preventDefault();
-    if (!folderForm.name.trim()) return alert("يرجى كتابة اسم الفولدر");
+    setFolderFormError("");
+
+    if (!folderForm.name.trim()) {
+      setFolderFormError("يرجى كتابة اسم الفولدر");
+      return;
+    }
 
     const subcategories = folderForm.subcategoriesText
       .split("\n")
@@ -300,8 +359,18 @@ export default function AdminPage() {
       subcategories
     };
 
-    await saveFolder(folderData, editingFolder?.id || folderForm.id);
-    setFolderModalOpen(false);
+    setIsSavingFolder(true);
+    try {
+      await saveFolder(folderData, editingFolder?.id);
+      setSeedStatus("✅ تم حفظ الفولدر بنجاح!");
+      setTimeout(() => setSeedStatus(""), 4000);
+      setFolderModalOpen(false);
+    } catch (err) {
+      console.error("Error in handleSaveFolder:", err);
+      setFolderFormError("حدث خطأ أثناء حفظ الفولدر: " + (err.message || "حاول مجدداً"));
+    } finally {
+      setIsSavingFolder(false);
+    }
   };
 
   // Seed Handler
@@ -604,12 +673,18 @@ export default function AdminPage() {
 
             <form onSubmit={handleSaveProject} className="space-y-4 text-xs">
               
+              {projectFormError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 font-bold text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{projectFormError}</span>
+                </div>
+              )}
+              
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
                   <label className="block text-wood-muted font-bold mb-1">اسم العمل / الموديل *</label>
                   <input
                     type="text"
-                    required
                     value={projectForm.title}
                     onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
                     placeholder="مثال: غرفة نوم ماستر دوكو فرن مط"
@@ -621,7 +696,6 @@ export default function AdminPage() {
                   <label className="block text-wood-muted font-bold mb-1">كود العمل (Code) *</label>
                   <input
                     type="text"
-                    required
                     value={projectForm.code}
                     onChange={(e) => setProjectForm({ ...projectForm, code: e.target.value })}
                     placeholder="مثال: BED-101"
@@ -810,16 +884,23 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => setProjectModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-muted"
+                  className="px-4 py-2 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-muted font-bold"
                 >
                   إلغاء
                 </button>
                 <button
                   type="submit"
-                  disabled={isProcessingImages}
-                  className="px-6 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-bold shadow-lg shadow-wood-amber/20 disabled:opacity-50"
+                  disabled={isSavingProject || isProcessingImages}
+                  className="px-6 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-bold shadow-lg shadow-wood-amber/20 disabled:opacity-50 flex items-center gap-2"
                 >
-                  حفظ العمل
+                  {isSavingProject ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>جاري الحفظ...</span>
+                    </>
+                  ) : (
+                    <span>حفظ العمل</span>
+                  )}
                 </button>
               </div>
 
@@ -842,11 +923,17 @@ export default function AdminPage() {
             </div>
 
             <form onSubmit={handleSaveFolder} className="space-y-4 text-xs">
+              {folderFormError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 font-bold text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{folderFormError}</span>
+                </div>
+              )}
+
               <div>
                 <label className="block text-wood-muted font-bold mb-1">اسم الفولدر *</label>
                 <input
                   type="text"
-                  required
                   value={folderForm.name}
                   onChange={(e) => setFolderForm({ ...folderForm, name: e.target.value })}
                   placeholder="مثال: غرف نوم ماستر"
@@ -909,16 +996,23 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => setFolderModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-muted"
+                  className="px-4 py-2 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-muted font-bold"
                 >
                   إلغاء
                 </button>
                 <button
                   type="submit"
-                  disabled={isProcessingFolderImage}
-                  className="px-6 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-bold shadow-lg shadow-wood-amber/20 disabled:opacity-50"
+                  disabled={isSavingFolder || isProcessingFolderImage}
+                  className="px-6 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-bold shadow-lg shadow-wood-amber/20 disabled:opacity-50 flex items-center gap-2"
                 >
-                  حفظ الفولدر
+                  {isSavingFolder ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>جاري الحفظ...</span>
+                    </>
+                  ) : (
+                    <span>حفظ الفولدر</span>
+                  )}
                 </button>
               </div>
 

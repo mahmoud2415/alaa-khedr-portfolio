@@ -38,7 +38,7 @@ export default function FolderDetailsPage() {
   const projects = getProjectsByFolder(folder.id, selectedSubcategory);
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-16">
       
       {/* ── 1. FOLDER HEADER & BREADCRUMB ───────────────────────────── */}
       <div className="relative overflow-hidden bg-wood-850 border-b border-wood-700/60 py-8">

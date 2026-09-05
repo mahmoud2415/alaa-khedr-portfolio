@@ -1,72 +1,26 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { usePortfolio } from '../../context/PortfolioContext';
-import { Home, FolderTree, Phone, MessageCircle, ShieldCheck } from 'lucide-react';
+import { Home } from 'lucide-react';
 
 export default function BottomNav() {
-  const { craftsmanInfo } = usePortfolio();
   const location = useLocation();
 
-  const isActive = (path) => location.pathname === path;
+  const handleClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-2 sm:hidden pointer-events-none">
-      <div className="max-w-md mx-auto glass-wood rounded-2xl border border-wood-700/80 p-2 shadow-2xl pointer-events-auto flex items-center justify-around gap-1">
-        
-        {/* Home */}
-        <Link
-          to="/"
-          className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl text-[11px] font-bold transition-all ${
-            isActive('/') ? 'text-wood-gold bg-wood-800/80 shadow-inner' : 'text-wood-muted hover:text-wood-cream'
-          }`}
-        >
-          <Home className="w-4 h-4 mb-0.5" />
-          <span>الرئيسية</span>
-        </Link>
-
-        {/* Folders */}
-        <Link
-          to="/#folders-section"
-          className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl text-[11px] font-bold transition-all ${
-            location.pathname.startsWith('/folder') ? 'text-wood-gold bg-wood-800/80 shadow-inner' : 'text-wood-muted hover:text-wood-cream'
-          }`}
-        >
-          <FolderTree className="w-4 h-4 mb-0.5" />
-          <span>الأقسام</span>
-        </Link>
-
-        {/* Floating Core WhatsApp Button (Thumb Reach) */}
-        <a
-          href={craftsmanInfo.whatsappDirectUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 scale-105 active:scale-95 transition-all"
-        >
-          <MessageCircle className="w-4 h-4 fill-white" />
-          <span>واتساب</span>
-        </a>
-
-        {/* Call Button */}
-        <a
-          href={`tel:${craftsmanInfo.phone}`}
-          className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl text-[11px] font-bold text-wood-cream bg-wood-800/60 active:bg-wood-700 transition-all"
-        >
-          <Phone className="w-4 h-4 text-wood-amber mb-0.5" />
-          <span>اتصال</span>
-        </a>
-
-        {/* Admin */}
-        <Link
-          to="/admin"
-          className={`flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-            isActive('/admin') ? 'text-wood-gold bg-wood-800/80' : 'text-wood-muted hover:text-wood-cream'
-          }`}
-        >
-          <ShieldCheck className="w-4 h-4 mb-0.5" />
-          <span>الإدارة</span>
-        </Link>
-
-      </div>
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0F0D0B]/95 backdrop-blur-md border-t border-wood-700/70 py-2.5 px-4 flex items-center justify-center shadow-2xl shadow-black">
+      <Link
+        to="/"
+        onClick={handleClick}
+        className="flex items-center justify-center gap-2 w-full max-w-xs py-2 px-6 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-cream hover:text-wood-gold border border-wood-amber/40 hover:border-wood-amber shadow-md transition-all active:scale-95 text-xs font-alexandria font-bold group"
+      >
+        <div className="w-5 h-5 rounded-lg bg-wood-amber/20 group-hover:bg-wood-amber/30 flex items-center justify-center text-wood-amber transition-colors">
+          <Home className="w-3.5 h-3.5" />
+        </div>
+        <span>الرئيسية</span>
+      </Link>
     </div>
   );
 }
