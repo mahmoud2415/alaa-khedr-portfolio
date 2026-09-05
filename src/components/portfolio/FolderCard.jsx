@@ -51,24 +51,6 @@ export default function FolderCard({ folder }) {
           {folder.desc}
         </p>
 
-        {/* Subcategories tags preview */}
-        {folder.subcategories && folder.subcategories.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-wood-700/40">
-            {folder.subcategories.slice(0, 3).map((sub) => (
-              <span
-                key={sub.id}
-                className="px-2 py-0.5 rounded-lg bg-wood-800/80 text-[10px] text-wood-muted border border-wood-700/50"
-              >
-                {sub.name}
-              </span>
-            ))}
-            {folder.subcategories.length > 3 && (
-              <span className="px-1.5 py-0.5 text-[10px] text-wood-amber font-bold">
-                +{folder.subcategories.length - 3}
-              </span>
-            )}
-          </div>
-        )}
       </div>
     </Link>
   );

@@ -247,7 +247,7 @@ export default function HomePage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 gap-5">
             {folders.map((folder) => (
               <FolderCard key={folder.id} folder={folder} />
             ))}
