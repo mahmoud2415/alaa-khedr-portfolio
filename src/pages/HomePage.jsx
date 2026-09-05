@@ -104,7 +104,7 @@ export default function HomePage() {
       
       {/* ── 1. LUXURY EDITORIAL HERO SLIDER BANNER ────────────────────── */}
       {!searchQuery && sliderProjects.length > 0 && (
-        <section className="relative w-full max-w-6xl mx-auto px-4 pt-4 sm:pt-6">
+        <section className="relative w-full max-w-6xl mx-auto px-4 pt-6 sm:pt-8 pb-6 sm:pb-10">
           <div 
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -229,8 +229,8 @@ export default function HomePage() {
 
       {/* ── 3. HIERARCHICAL FOLDERS SECTION ─────────────────────────── */}
       {!searchQuery && (
-        <section id="folders-section" className="max-w-6xl mx-auto px-4 py-10">
-          <div className="flex items-center justify-between mb-6">
+        <section id="folders-section" className="max-w-6xl mx-auto px-4 py-14 sm:py-20">
+          <div className="flex items-center justify-between mb-10">
             <div>
               <div className="flex items-center gap-2">
                 <Layers className="w-5 h-5 text-wood-amber" />
@@ -247,7 +247,7 @@ export default function HomePage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-5">
+          <div className="grid grid-cols-1 gap-10 sm:gap-12">
             {folders.map((folder) => (
               <FolderCard key={folder.id} folder={folder} />
             ))}

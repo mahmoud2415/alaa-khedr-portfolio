@@ -41,13 +41,13 @@ export default function FolderCard({ folder }) {
       </div>
 
       {/* Folder Content */}
-      <div className="p-4 relative">
+      <div className="p-5 sm:p-6 relative">
         <h3 className="font-alexandria font-bold text-base text-wood-cream group-hover:text-wood-gold transition-colors flex items-center justify-between">
           <span>{folder.name}</span>
           <ChevronLeft className="w-4 h-4 text-wood-muted group-hover:text-wood-amber group-hover:-translate-x-1 transition-all" />
         </h3>
         
-        <p className="text-xs text-wood-muted/80 mt-1 line-clamp-2">
+        <p className="text-xs sm:text-sm text-wood-muted/80 mt-2 line-clamp-2 leading-6">
           {folder.desc}
         </p>
 
