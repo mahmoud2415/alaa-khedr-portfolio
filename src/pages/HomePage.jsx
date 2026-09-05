@@ -5,7 +5,6 @@ import FolderCard from '../components/portfolio/FolderCard';
 import ProjectCard from '../components/portfolio/ProjectCard';
 import ImageLightbox from '../components/portfolio/ImageLightbox';
 import { 
-  Sparkles, 
   Layers, 
   Search,
   ChevronLeft,
@@ -248,7 +247,7 @@ export default function HomePage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-2 gap-5">
             {folders.map((folder) => (
               <FolderCard key={folder.id} folder={folder} />
             ))}
@@ -256,32 +255,7 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── 4. FEATURED WORKS (أعمال مميزة مختارة) ──────────────────── */}
-      {!searchQuery && featuredProjects.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 py-8 border-t border-wood-700/50">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-wood-gold" />
-                <h2 className="font-alexandria font-bold text-lg sm:text-xl text-wood-cream">
-                  أحدث وأبرز التشطيبات المنفذة
-                </h2>
-              </div>
-              <p className="text-xs text-wood-muted mt-1">
-                أحدث أعمال الورشة بأكوادها المميزة لطلب نفس الموديل عبر الواتساب
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} onOpenLightbox={openLightbox} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── 5. LIGHTBOX MODAL ───────────────────────────────────────── */}
+      {/* ── 4. LIGHTBOX MODAL ───────────────────────────────────────── */}
       <ImageLightbox
         isOpen={lightboxData.isOpen}
         images={lightboxData.images}
