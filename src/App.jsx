@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
-import BottomNav from './components/layout/BottomNav';
 import Footer from './components/layout/Footer';
 import HomePage from './pages/HomePage';
 import FolderDetailsPage from './pages/FolderDetailsPage';
@@ -40,8 +39,8 @@ export default function App() {
       </div>
 
       <Footer />
-      <BottomNav />
     </div>
   );
 }
+
 

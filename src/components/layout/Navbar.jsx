@@ -1,19 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Phone, MessageCircle, MapPin, Search } from 'lucide-react';
+import { Phone, MessageCircle } from 'lucide-react';
 
 export default function Navbar() {
-  const { craftsmanInfo, searchQuery, setSearchQuery } = usePortfolio();
+  const { craftsmanInfo } = usePortfolio();
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0F0D0B]/90 backdrop-blur-md border-b border-wood-700/60 transition-all">
-      {/* Top Banner with direct quick actions */}
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-40 bg-[#0F0D0B]/95 backdrop-blur-md border-b border-wood-700/60 transition-all">
+      <div className="max-w-6xl mx-auto px-4 py-2 sm:py-2.5 flex items-center justify-between gap-3">
         
         {/* Brand Logo & Name */}
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-wood-amber/50 group-hover:border-wood-amber transition-colors shrink-0 shadow-lg shadow-wood-amber/10">
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-wood-amber/60 group-hover:border-wood-amber transition-colors shrink-0 shadow-md">
             <img 
               src={craftsmanInfo.avatar} 
               alt={craftsmanInfo.name}
@@ -22,28 +21,28 @@ export default function Navbar() {
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h1 className="font-alexandria font-bold text-sm sm:text-base text-wood-cream group-hover:text-wood-gold transition-colors">
+              <h1 className="font-alexandria font-black text-sm sm:text-base text-wood-cream group-hover:text-wood-gold transition-colors tracking-tight">
                 {craftsmanInfo.name}
               </h1>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="متاح للعمل"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-wood-amber animate-pulse" title="متاح للعمل"></span>
             </div>
-            <p className="text-[11px] sm:text-xs text-wood-muted line-clamp-1">
+            <p className="text-[10px] sm:text-xs font-bold text-wood-muted line-clamp-1">
               {craftsmanInfo.title}
             </p>
           </div>
         </Link>
 
-        {/* Desktop / Tablet Nav Links & Action Buttons */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Quick Direct Actions */}
+        <div className="flex items-center gap-2">
           
-          {/* Direct Phone Call Button */}
+          {/* Direct Phone Call */}
           <a
             href={`tel:${craftsmanInfo.phone}`}
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-cream border border-wood-700 text-xs font-bold transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-cream border border-wood-700 text-xs font-black transition-all shadow-sm active:scale-95"
             title="اتصال هاتفي"
           >
-            <Phone className="w-3.5 h-3.5 text-wood-amber" />
-            <span className="hidden sm:inline">اتصال</span>
+            <Phone className="w-3.5 h-3.5 text-wood-amber stroke-[2.5]" />
+            <span className="hidden xs:inline">اتصال</span>
           </a>
 
           {/* WhatsApp Direct Chat */}
@@ -51,36 +50,14 @@ export default function Navbar() {
             href={craftsmanInfo.whatsappDirectUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white text-xs font-black transition-all shadow-md shadow-wood-amber/25 active:scale-95"
           >
-            <MessageCircle className="w-4 h-4 fill-white" />
+            <MessageCircle className="w-3.5 h-3.5 fill-white" />
             <span>واتساب</span>
           </a>
 
         </div>
 
-      </div>
-
-      {/* Quick Search Bar */}
-      <div className="max-w-6xl mx-auto px-4 pb-2.5">
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="ابحث بكود الشغل (مثل #BED-101) أو نوع الدهان..."
-            className="w-full bg-wood-850/80 border border-wood-700/70 rounded-xl px-4 py-2 pr-10 text-xs sm:text-sm text-wood-cream placeholder:text-wood-muted/60 outline-none focus:border-wood-amber focus:ring-1 focus:ring-wood-amber transition-all"
-          />
-          <Search className="w-4 h-4 text-wood-muted absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-wood-muted hover:text-wood-cream"
-            >
-              مسح
-            </button>
-          )}
-        </div>
       </div>
     </header>
   );

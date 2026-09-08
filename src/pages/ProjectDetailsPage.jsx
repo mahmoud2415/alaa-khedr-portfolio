@@ -50,15 +50,10 @@ export default function ProjectDetailsPage() {
     ? project.images 
     : ["https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80"];
 
-  // WhatsApp Inquiry Message with exact requested opening
-  const waMessage = `السلام عليكم، عايز استفسر عن تفاصيل وسعر الشغل ده:
-
-📋 *بيانات الشغل:*
-▪️ كود الشغل: #${project.code || project.id}
+  // WhatsApp Inquiry Message with pure work details (no intro)
+  const waMessage = `▪️ كود الشغل: #${project.code || project.id}
 ▪️ اسم الموديل: ${project.title}
-${project.paintType ? `▪️ نوع الدهان والتشطيب: ${project.paintType}\n` : ""}${project.woodType ? `▪️ نوع الخشب: ${project.woodType}\n` : ""}${project.color ? `▪️ اللون واللمعان: ${project.color}\n` : ""}
-🔗 رابط الشغل:
-${window.location.href}`;
+${project.paintType ? `▪️ نوع الدهان والتشطيب: ${project.paintType}\n` : ""}${project.woodType ? `▪️ نوع الخشب: ${project.woodType}\n` : ""}${project.color ? `▪️ اللون واللمعان: ${project.color}\n` : ""}▪️ رابط الشغل: ${window.location.href}`;
 
   const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waMessage)}`;
 
@@ -256,7 +251,7 @@ ${window.location.href}`;
                 href={waUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-sm shadow-xl shadow-emerald-600/30 transition-all active:scale-95"
+                className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-2xl bg-wood-amber hover:bg-wood-gold active:bg-amber-600 text-white font-bold text-sm shadow-xl shadow-wood-amber/25 transition-all active:scale-95"
               >
                 <MessageCircle className="w-5 h-5 fill-white" />
                 <span>استفسر عن سعر وتفاصيل هذا الشغل عبر واتساب</span>

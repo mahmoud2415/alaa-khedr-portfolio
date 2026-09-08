@@ -134,11 +134,26 @@ const INITIAL_SAMPLE_PROJECTS = [
 ];
 
 export const PortfolioProvider = ({ children }) => {
-  const [folders, setFolders] = useState([]);
-  const [projects, setProjects] = useState([]);
+  const [folders, setFolders] = useState(() => {
+    try {
+      const cached = localStorage.getItem('wood_cached_folders');
+      return cached ? JSON.parse(cached) : CRAFTSMAN_CONFIG.defaultFolders;
+    } catch {
+      return CRAFTSMAN_CONFIG.defaultFolders;
+    }
+  });
+
+  const [projects, setProjects] = useState(() => {
+    try {
+      const cached = localStorage.getItem('wood_cached_projects');
+      return cached ? JSON.parse(cached) : INITIAL_SAMPLE_PROJECTS;
+    } catch {
+      return INITIAL_SAMPLE_PROJECTS;
+    }
+  });
+
   const [craftsmanInfo, setCraftsmanInfo] = useState(CRAFTSMAN_CONFIG);
-  const [bannerProjectIds, setBannerProjectIds] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // 1. Realtime Firestore Listeners
@@ -146,7 +161,6 @@ export const PortfolioProvider = ({ children }) => {
     let unsubFolders = () => {};
     let unsubProjects = () => {};
     let unsubInfo = () => {};
-    let unsubBanner = () => {};
 
     try {
       // Folders listener
@@ -154,13 +168,10 @@ export const PortfolioProvider = ({ children }) => {
         if (!snap.empty) {
           const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           setFolders(list);
-        } else {
-          // If empty in Firestore, use default folders from config
-          setFolders(CRAFTSMAN_CONFIG.defaultFolders);
+          try { localStorage.setItem('wood_cached_folders', JSON.stringify(list)); } catch(e){}
         }
       }, (err) => {
-        console.warn("Folders snapshot error, using default config:", err.message);
-        setFolders(CRAFTSMAN_CONFIG.defaultFolders);
+        console.warn("Folders snapshot error:", err.message);
       });
 
       // Projects listener
@@ -168,14 +179,11 @@ export const PortfolioProvider = ({ children }) => {
         if (!snap.empty) {
           const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           setProjects(list);
-        } else {
-          // If empty, load sample projects
-          setProjects(INITIAL_SAMPLE_PROJECTS);
+          try { localStorage.setItem('wood_cached_projects', JSON.stringify(list)); } catch(e){}
         }
         setLoading(false);
       }, (err) => {
-        console.warn("Projects snapshot error, using sample data:", err.message);
-        setProjects(INITIAL_SAMPLE_PROJECTS);
+        console.warn("Projects snapshot error:", err.message);
         setLoading(false);
       });
 
@@ -188,19 +196,8 @@ export const PortfolioProvider = ({ children }) => {
         console.warn("Settings error:", err.message);
       });
 
-      unsubBanner = onSnapshot(doc(db, "settings", "banner_config"), (docSnap) => {
-        setBannerProjectIds(docSnap.exists() && Array.isArray(docSnap.data().projectIds)
-          ? docSnap.data().projectIds
-          : []);
-      }, (err) => {
-        console.warn("Banner settings error:", err.message);
-        setBannerProjectIds([]);
-      });
-
     } catch (e) {
       console.error("Firestore init error:", e);
-      setFolders(CRAFTSMAN_CONFIG.defaultFolders);
-      setProjects(INITIAL_SAMPLE_PROJECTS);
       setLoading(false);
     }
 
@@ -208,7 +205,6 @@ export const PortfolioProvider = ({ children }) => {
       unsubFolders();
       unsubProjects();
       unsubInfo();
-      unsubBanner();
     };
   }, []);
 
@@ -259,10 +255,18 @@ export const PortfolioProvider = ({ children }) => {
 
     // Instant local state update for immediate feedback
     if (projectId) {
-      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, ...finalProjectData } : p));
+      setProjects(prev => {
+        const next = prev.map(p => p.id === projectId ? { ...p, ...finalProjectData } : p);
+        try { localStorage.setItem('wood_cached_projects', JSON.stringify(next)); } catch(e){}
+        return next;
+      });
     } else {
       const tempId = `proj_${Date.now()}`;
-      setProjects(prev => [{ id: tempId, ...finalProjectData, createdAt: new Date().toISOString() }, ...prev]);
+      setProjects(prev => {
+        const next = [{ id: tempId, ...finalProjectData, createdAt: new Date().toISOString() }, ...prev];
+        try { localStorage.setItem('wood_cached_projects', JSON.stringify(next)); } catch(e){}
+        return next;
+      });
     }
 
     // Persist to Firestore with 4-second timeout to avoid hanging
@@ -290,26 +294,32 @@ export const PortfolioProvider = ({ children }) => {
   };
 
   const deleteProject = async (projectId) => {
-    setProjects(prev => prev.filter(p => p.id !== projectId));
+    const remaining = projects.filter(p => p.id !== projectId);
+    setProjects(remaining);
+    try { localStorage.setItem('wood_cached_projects', JSON.stringify(remaining)); } catch(e){}
+
     try {
       await deleteDoc(doc(db, "projects", projectId));
+      for (const p of remaining) {
+        await setDoc(doc(db, "projects", p.id), p, { merge: true });
+      }
     } catch (e) {
       console.warn("Delete firestore error:", e.message);
     }
   };
 
-  const saveBannerSettings = async (projectIds) => {
-    await setDoc(doc(db, "settings", "banner_config"), {
-      projectIds,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-    setBannerProjectIds(projectIds);
-    return { success: true };
-  };
-
   // Add / Edit Folder
   const saveFolder = async (folderData, folderId = null) => {
     const id = folderId || folderData.id || folderData.name.trim().toLowerCase().replace(/\s+/g, '_');
+    const updatedFolder = { ...folderData, id, updatedAt: new Date().toISOString() };
+    
+    setFolders(prev => {
+      const exists = prev.some(f => f.id === id);
+      const next = exists ? prev.map(f => f.id === id ? { ...f, ...updatedFolder } : f) : [...prev, updatedFolder];
+      try { localStorage.setItem('wood_cached_folders', JSON.stringify(next)); } catch(e){}
+      return next;
+    });
+
     try {
       await setDoc(doc(db, "folders", id), {
         ...folderData,
@@ -319,38 +329,22 @@ export const PortfolioProvider = ({ children }) => {
       return { success: true };
     } catch (err) {
       console.error("Error saving folder:", err);
-      setFolders(prev => {
-        const exists = prev.some(f => f.id === id);
-        if (exists) return prev.map(f => f.id === id ? { ...f, ...folderData } : f);
-        return [...prev, { id, ...folderData }];
-      });
-      return { success: true };
+      return { success: true, localOnly: true };
     }
   };
 
   const deleteFolder = async (folderId) => {
+    const remaining = folders.filter(f => f.id !== folderId);
+    setFolders(remaining);
+    try { localStorage.setItem('wood_cached_folders', JSON.stringify(remaining)); } catch(e){}
+
     try {
       await deleteDoc(doc(db, "folders", folderId));
+      for (const f of remaining) {
+        await setDoc(doc(db, "folders", f.id), f, { merge: true });
+      }
     } catch (e) {
-      setFolders(prev => prev.filter(f => f.id !== folderId));
-    }
-  };
-
-  // 1-Click Seed Sample Data to Firestore
-  const seedSampleData = async () => {
-    try {
-      // 1. Seed Folders
-      for (const folder of CRAFTSMAN_CONFIG.defaultFolders) {
-        await setDoc(doc(db, "folders", folder.id), folder, { merge: true });
-      }
-      // 2. Seed Projects
-      for (const proj of INITIAL_SAMPLE_PROJECTS) {
-        await setDoc(doc(db, "projects", proj.id), proj, { merge: true });
-      }
-      return { success: true, message: "تم رفع الفولدرات والأعمال النموذجية بنجاح!" };
-    } catch (err) {
-      console.error("Seed error:", err);
-      return { success: false, error: err.message };
+      console.warn("Delete firestore error:", e.message);
     }
   };
 
@@ -366,14 +360,10 @@ export const PortfolioProvider = ({ children }) => {
       getProjectsByFolder,
       getProjectByIdOrCode,
       getFeaturedProjects,
-      bannerProjectIds,
-      getBannerProjects,
-      saveBannerSettings,
       saveProject,
       deleteProject,
       saveFolder,
       deleteFolder,
-      seedSampleData,
       setCraftsmanInfo
     }}>
       {children}

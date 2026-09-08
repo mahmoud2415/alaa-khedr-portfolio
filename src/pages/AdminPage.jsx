@@ -91,10 +91,7 @@ export default function AdminPage() {
     saveProject, 
     deleteProject, 
     saveFolder, 
-    deleteFolder, 
-    seedSampleData,
-    bannerProjectIds,
-    saveBannerSettings
+    deleteFolder 
   } = usePortfolio();
 
   // Authentication State
@@ -104,8 +101,6 @@ export default function AdminPage() {
 
   // Tabs: 'projects' | 'folders'
   const [activeTab, setActiveTab] = useState("projects");
-  const [selectedBannerProjects, setSelectedBannerProjects] = useState([]);
-  const [bannerSaveStatus, setBannerSaveStatus] = useState("");
 
   // Project Modal State
   const [projectModalOpen, setProjectModalOpen] = useState(false);
@@ -141,18 +136,14 @@ export default function AdminPage() {
     subcategoriesText: "" // newline separated subcategory names
   });
 
-  // Seed / Action notification toast
-  const [seedStatus, setSeedStatus] = useState("");
+  // Action notification toast
+  const [actionStatus, setActionStatus] = useState("");
 
   // Check existing session
   useEffect(() => {
     const session = sessionStorage.getItem("wood_admin_auth");
     if (session === "true") setIsAuthenticated(true);
   }, []);
-
-  useEffect(() => {
-    setSelectedBannerProjects(bannerProjectIds);
-  }, [bannerProjectIds]);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -274,10 +265,10 @@ export default function AdminPage() {
       desc: projectForm.desc.trim(),
       folderId: projectForm.folderId || folders[0]?.id || "bedrooms",
       subcategoryId: projectForm.subcategoryId || "",
-      paintType: projectForm.paintType.trim() || "دوكو فرن",
-      woodType: projectForm.woodType.trim() || "خشب زان",
-      color: projectForm.color.trim() || "طبيعي",
-      duration: projectForm.duration.trim() || "10 أيام",
+      paintType: projectForm.paintType.trim() || "دوكو فرن مط",
+      woodType: projectForm.woodType.trim() || "خشب زان أحمر",
+      color: projectForm.color.trim() || "",
+      duration: projectForm.duration.trim() || "",
       isFeatured: !!projectForm.isFeatured,
       images: finalImages
     };
@@ -285,8 +276,8 @@ export default function AdminPage() {
     setIsSavingProject(true);
     try {
       await saveProject(projectData, editingProject?.id);
-      setSeedStatus("✅ تم حفظ العمل بنجاح ونشره في المعرض!");
-      setTimeout(() => setSeedStatus(""), 4000);
+      setActionStatus("✅ تم حفظ العمل بنجاح ونشره في المعرض!");
+      setTimeout(() => setActionStatus(""), 4000);
       setProjectModalOpen(false);
     } catch (err) {
       console.error("Error in handleSaveProject:", err);
@@ -305,7 +296,7 @@ export default function AdminPage() {
       name: "",
       desc: "",
       image: "",
-      subcategoriesText: "دوكو فرن مط\nإستر وتعتيق\nقشرة أرو"
+      subcategoriesText: "دوكو فرن مط\nإستر وبوليستر وتعتيق\nقشرة أرو وزان\nتجديد ودهان قديم"
     });
     setFolderModalOpen(true);
   };
@@ -335,7 +326,7 @@ export default function AdminPage() {
       setFolderForm(prev => ({ ...prev, image: dataUrl }));
     } catch (err) {
       console.error("Error compressing folder image:", err);
-      setFolderFormError("حدث خطأ أثناء معالجة صورة الفولدر.");
+      setFolderFormError("حدث خطأ أثناء معالجة صورة القسم.");
     } finally {
       setIsProcessingFolderImage(false);
       e.target.value = "";
@@ -347,7 +338,7 @@ export default function AdminPage() {
     setFolderFormError("");
 
     if (!folderForm.name.trim()) {
-      setFolderFormError("يرجى كتابة اسم الفولدر");
+      setFolderFormError("يرجى كتابة اسم القسم");
       return;
     }
 
@@ -362,7 +353,7 @@ export default function AdminPage() {
 
     const folderData = {
       name: folderForm.name.trim(),
-      desc: folderForm.desc.trim(),
+      desc: "",
       image: folderForm.image || "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80",
       icon: "Layers",
       subcategories
@@ -371,42 +362,29 @@ export default function AdminPage() {
     setIsSavingFolder(true);
     try {
       await saveFolder(folderData, editingFolder?.id);
-      setSeedStatus("✅ تم حفظ الفولدر بنجاح!");
-      setTimeout(() => setSeedStatus(""), 4000);
+      setActionStatus("✅ تم حفظ القسم بنجاح!");
+      setTimeout(() => setActionStatus(""), 4000);
       setFolderModalOpen(false);
     } catch (err) {
       console.error("Error in handleSaveFolder:", err);
-      setFolderFormError("حدث خطأ أثناء حفظ الفولدر: " + (err.message || "حاول مجدداً"));
+      setFolderFormError("حدث خطأ أثناء حفظ القسم: " + (err.message || "حاول مجدداً"));
     } finally {
       setIsSavingFolder(false);
-    }
-  };
-
-  // Seed Handler
-  const handleSeed = async () => {
-    if (!confirm("هل أنت متأكد من استيراد نماذج الأعمال والفولدرات الجاهزة؟")) return;
-    setSeedStatus("جاري الاستيراد والتحديث في قاعدة البيانات...");
-    const res = await seedSampleData();
-    if (res.success) {
-      setSeedStatus("✅ تم استيراد وتحديث المعرض بنجاح 100%!");
-      setTimeout(() => setSeedStatus(""), 4000);
-    } else {
-      setSeedStatus(`❌ خطأ: ${res.error}`);
     }
   };
 
   // ── PIN LOGIN SCREEN ─────────────────────────────────────
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-wood-900">
-        <div className="w-full max-w-sm glass-wood p-6 rounded-3xl border border-wood-700 shadow-2xl text-center">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#0F0D0B]">
+        <div className="w-full max-w-sm glass-card p-7 rounded-3xl border border-wood-700/80 shadow-2xl text-center bg-wood-850/95">
           
-          <div className="w-16 h-16 rounded-2xl bg-wood-amber/20 border border-wood-amber/40 flex items-center justify-center text-wood-amber mx-auto mb-4">
-            <Lock className="w-8 h-8" />
+          <div className="w-16 h-16 rounded-2xl bg-wood-amber/20 border border-wood-amber/40 flex items-center justify-center text-wood-amber mx-auto mb-4 shadow-inner">
+            <Lock className="w-8 h-8 stroke-[2.5]" />
           </div>
 
-          <h2 className="text-xl font-bold font-alexandria text-wood-cream">لوحة تحكم الأسطى علاء خضر</h2>
-          <p className="text-xs text-wood-muted mt-1 mb-6">أدخل رمز الدخول لإدارة الفولدرات والأعمال</p>
+          <h2 className="text-xl font-black font-alexandria text-wood-cream">لوحة إدارة المعرض</h2>
+          <p className="text-xs font-bold text-wood-muted mt-1 mb-6">أدخل رمز الدخول لإضافة وتعديل الأقسام والأعمال</p>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <input
@@ -414,22 +392,21 @@ export default function AdminPage() {
               value={pinInput}
               onChange={(e) => setPinInput(e.target.value)}
               placeholder="رمز الدخول (الافتراضي: 1234)"
-              className="w-full bg-wood-850 border border-wood-700 rounded-xl px-4 py-3 text-center text-wood-cream placeholder:text-wood-muted/50 text-sm outline-none focus:border-wood-amber"
+              className="w-full bg-wood-900 border border-wood-700 rounded-xl px-4 py-3 text-center text-wood-cream placeholder:text-wood-muted/50 text-sm font-black outline-none focus:border-wood-amber"
             />
             
-            {pinError && <p className="text-xs text-rose-400 font-medium">{pinError}</p>}
+            {pinError && <p className="text-xs text-rose-400 font-black">{pinError}</p>}
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-wood-amber hover:bg-wood-gold active:bg-wood-amber text-white font-bold text-sm shadow-lg shadow-wood-amber/30 transition-all"
+              className="w-full py-3.5 rounded-xl bg-wood-amber hover:bg-wood-gold active:bg-wood-amber text-white font-black text-sm shadow-lg shadow-wood-amber/30 transition-all active:scale-95"
             >
               تسجيل الدخول
             </button>
-
           </form>
 
-          <Link to="/" className="inline-block mt-4 text-xs text-wood-muted hover:text-wood-cream">
-            العودة للمعرض
+          <Link to="/" className="inline-block mt-5 text-xs font-black text-wood-muted hover:text-wood-cream transition-colors">
+            ← العودة للمعرض الرئيسي
           </Link>
         </div>
       </div>
@@ -438,33 +415,33 @@ export default function AdminPage() {
 
   // ── AUTHENTICATED DASHBOARD ──────────────────────────────
   return (
-    <div className="min-h-screen pb-24 text-wood-cream">
+    <div className="min-h-screen pb-24 text-wood-cream bg-[#0F0D0B]">
       
       {/* Admin Topbar */}
-      <header className="sticky top-0 z-40 bg-wood-900/95 backdrop-blur-md border-b border-wood-700/60 px-4 py-3">
+      <header className="sticky top-0 z-40 bg-[#0F0D0B]/95 backdrop-blur-xl border-b border-wood-700/60 px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-wood-amber flex items-center justify-center text-white font-black">
+            <div className="w-10 h-10 rounded-xl bg-wood-amber flex items-center justify-center text-white font-black text-lg shadow-md shadow-wood-amber/30">
               ع
             </div>
             <div>
-              <h1 className="font-alexandria font-bold text-sm text-wood-cream">لوحة إدارة المعرض والأعمال</h1>
-              <span className="text-[11px] text-emerald-400">● متصل ومزامن لحظياً بـ Firebase</span>
+              <h1 className="font-alexandria font-black text-sm sm:text-base text-wood-cream">لوحة تحكم المعرض</h1>
+              <span className="text-[11px] font-bold text-emerald-400">● مزامن لحظياً مع قاعدة البيانات</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <Link
               to="/"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-cream text-xs border border-wood-700"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-cream text-xs font-black border border-wood-700 transition-all"
             >
-              <Home className="w-3.5 h-3.5" />
+              <Home className="w-3.5 h-3.5 text-wood-amber stroke-[2.5]" />
               <span>الموقع</span>
             </Link>
 
             <button
               onClick={handleLogout}
-              className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-xs font-bold border border-rose-500/30"
+              className="px-3.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-xs font-black border border-rose-500/30 transition-all"
             >
               خروج
             </button>
@@ -474,55 +451,31 @@ export default function AdminPage() {
 
       {/* Tabs Bar */}
       <div className="max-w-6xl mx-auto px-4 pt-6">
-        <div className="flex items-center justify-between gap-3 border-b border-wood-700/60 pb-3 overflow-x-auto no-scrollbar">
-          
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveTab("projects")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
-                activeTab === "projects" ? "bg-wood-amber text-white shadow-lg shadow-wood-amber/20" : "bg-wood-850 text-wood-muted hover:text-wood-cream"
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>الأعمال والمشاريع ({projects.length})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("folders")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
-                activeTab === "folders" ? "bg-wood-amber text-white shadow-lg shadow-wood-amber/20" : "bg-wood-850 text-wood-muted hover:text-wood-cream"
-              }`}
-            >
-              <FolderTree className="w-4 h-4" />
-              <span>الفولدرات والأقسام ({folders.length})</span>
-            </button>
-
-          </div>
-
-          {/* 1-Click Seed Button */}
+        <div className="flex items-center gap-2 border-b border-wood-700/60 pb-3 overflow-x-auto no-scrollbar">
           <button
-            onClick={handleSeed}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-wood-gold/15 hover:bg-wood-gold/25 text-wood-gold border border-wood-gold/30 text-xs font-bold shrink-0 transition-colors"
-            title="استيراد أعمال نموذجية جاهزة"
+            onClick={() => setActiveTab("projects")}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black whitespace-nowrap transition-all ${
+              activeTab === "projects" ? "bg-wood-amber text-white shadow-lg shadow-wood-amber/20" : "bg-wood-850 text-wood-muted hover:text-wood-cream border border-wood-700/60"
+            }`}
           >
-            <span>⚡ استيراد نماذج أعمال</span>
+            <Sparkles className="w-4 h-4 stroke-[2.5]" />
+            <span>الأعمال والمشاريع ({projects.length})</span>
           </button>
 
+          <button
+            onClick={() => setActiveTab("folders")}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black whitespace-nowrap transition-all ${
+              activeTab === "folders" ? "bg-wood-amber text-white shadow-lg shadow-wood-amber/20" : "bg-wood-850 text-wood-muted hover:text-wood-cream border border-wood-700/60"
+            }`}
+          >
+            <FolderTree className="w-4 h-4 stroke-[2.5]" />
+            <span>أقسام المعرض ({folders.length})</span>
+          </button>
         </div>
 
-        <button
-          onClick={() => setActiveTab("banner")}
-          className={`mt-3 flex w-full items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
-            activeTab === "banner" ? "bg-wood-amber text-white shadow-lg shadow-wood-amber/20" : "bg-wood-850 text-wood-muted hover:text-wood-cream border border-wood-700/60"
-          }`}
-        >
-          <Settings className="w-4 h-4" />
-          <span>إعدادات البانر - اختيار المشاريع الظاهرة في البانر</span>
-        </button>
-
-        {seedStatus && (
-          <div className="mt-4 p-3 rounded-xl bg-wood-gold/20 border border-wood-gold/40 text-wood-gold text-xs font-bold text-center">
-            {seedStatus}
+        {actionStatus && (
+          <div className="mt-4 p-3 rounded-xl bg-wood-gold/20 border border-wood-gold/40 text-wood-gold text-xs font-black text-center">
+            {actionStatus}
           </div>
         )}
       </div>
@@ -531,21 +484,21 @@ export default function AdminPage() {
       {activeTab === "projects" && (
         <main className="max-w-6xl mx-auto px-4 pt-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-alexandria font-bold text-base text-wood-cream">قائمة الأعمال والتشطيبات المنفذة</h2>
+            <h2 className="font-alexandria font-black text-base sm:text-lg text-wood-cream">قائمة الأعمال والتشطيبات المنفذة</h2>
             <button
               onClick={openAddProject}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-bold text-xs shadow-lg shadow-wood-amber/20 active:scale-95 transition-all"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-black text-xs shadow-lg shadow-wood-amber/20 active:scale-95 transition-all"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 stroke-[3]" />
               <span>إضافة عمل جديد من جهازك</span>
             </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {projects.map((proj) => (
-              <div key={proj.id} className="glass-card rounded-2xl overflow-hidden border border-wood-700/60 p-4 flex flex-col justify-between">
+              <div key={proj.id} className="glass-card rounded-2xl overflow-hidden border border-wood-700/70 p-4 flex flex-col justify-between bg-wood-850/90 shadow-lg">
                 <div>
-                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-wood-900">
+                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-wood-900 border border-wood-700/60">
                     <img 
                       src={proj.images?.[0] || "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80"} 
                       alt={proj.title}
@@ -555,19 +508,25 @@ export default function AdminPage() {
                       #{proj.code || proj.id}
                     </div>
                     {proj.images?.length > 1 && (
-                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/70 text-[10px] text-white backdrop-blur-sm font-bold">
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/80 text-[10px] text-white backdrop-blur-sm font-black">
                         {proj.images.length} صور
                       </div>
                     )}
-
                   </div>
 
-                  <h3 className="font-alexandria font-bold text-sm text-wood-cream line-clamp-1">{proj.title}</h3>
-                  <p className="text-xs text-wood-muted line-clamp-2 mt-1">{proj.desc}</p>
+                  <h3 className="font-alexandria font-black text-sm sm:text-base text-wood-cream line-clamp-1 leading-snug">{proj.title}</h3>
                   
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    <span className="text-[10px] bg-wood-800 text-wood-amber px-2 py-0.5 rounded-md">🎨 {proj.paintType}</span>
-                    <span className="text-[10px] bg-wood-800 text-wood-muted px-2 py-0.5 rounded-md">🪵 {proj.woodType}</span>
+                  <div className="flex flex-wrap gap-1.5 mt-2.5">
+                    {proj.paintType && (
+                      <span className="text-[11px] bg-wood-800 text-wood-amber px-2.5 py-1 rounded-lg font-black border border-wood-700/60">
+                        ✨ {proj.paintType}
+                      </span>
+                    )}
+                    {proj.woodType && (
+                      <span className="text-[11px] bg-wood-800 text-wood-muted px-2.5 py-1 rounded-lg font-bold border border-wood-700/60">
+                        🪵 {proj.woodType}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -575,17 +534,17 @@ export default function AdminPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => openEditProject(proj)}
-                      className="p-2 rounded-lg bg-wood-800 hover:bg-wood-700 text-wood-cream text-xs flex items-center gap-1 border border-wood-700"
+                      className="px-3 py-1.5 rounded-xl bg-wood-800 hover:bg-wood-700 text-wood-cream text-xs font-black flex items-center gap-1.5 border border-wood-700 transition-all"
                     >
-                      <Edit3 className="w-3.5 h-3.5 text-wood-amber" />
+                      <Edit3 className="w-3.5 h-3.5 text-wood-amber stroke-[2.5]" />
                       <span>تعديل</span>
                     </button>
                     
                     <Link
                       to={`/project/${proj.id}`}
                       target="_blank"
-                      className="p-2 rounded-lg bg-wood-800 hover:bg-wood-700 text-wood-muted hover:text-wood-cream text-xs border border-wood-700"
-                      title="معاينة"
+                      className="p-2 rounded-xl bg-wood-800 hover:bg-wood-700 text-wood-muted hover:text-wood-cream text-xs border border-wood-700 transition-all"
+                      title="معاينة العمل"
                     >
                       <Eye className="w-3.5 h-3.5" />
                     </Link>
@@ -597,7 +556,7 @@ export default function AdminPage() {
                         deleteProject(proj.id);
                       }
                     }}
-                    className="p-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-xs border border-rose-500/30"
+                    className="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-xs border border-rose-500/30 transition-all"
                     title="حذف"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -610,167 +569,94 @@ export default function AdminPage() {
         </main>
       )}
 
-      {activeTab === "banner" && (
-        <main className="max-w-6xl mx-auto px-4 pt-6">
-          <div className="glass-card rounded-2xl border border-wood-700/60 p-5">
-            <div className="mb-5">
-              <h2 className="font-alexandria font-bold text-base text-wood-cream">اختيار مشاريع البانر</h2>
-              <p className="text-xs text-wood-muted mt-1">
-                اختر المشاريع التي ستظهر في بانر الصفحة الرئيسية باستخدام صورة الغلاف الأولى لكل مشروع.
-              </p>
-            </div>
-
-            {projects.length === 0 ? (
-              <p className="text-sm text-wood-muted text-center py-8">لا توجد مشاريع متاحة للاختيار.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {projects.map((project) => {
-                  const isSelected = selectedBannerProjects.includes(project.id);
-                  return (
-                    <label
-                      key={project.id}
-                      className={`cursor-pointer rounded-xl overflow-hidden border transition-colors ${
-                        isSelected ? "border-wood-amber ring-1 ring-wood-amber/50" : "border-wood-700/60"
-                      }`}
-                    >
-                      <div className="relative aspect-[16/9] bg-wood-900">
-                        <img
-                          src={project.images?.[0]}
-                          alt={project.title}
-                          className="w-full h-full object-cover"
-                        />
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => setSelectedBannerProjects((current) =>
-                            isSelected
-                              ? current.filter(id => id !== project.id)
-                              : [...current, project.id]
-                          )}
-                          className="absolute top-2 right-2 w-5 h-5 accent-wood-amber"
-                        />
-                      </div>
-                      <div className="p-3 bg-wood-850">
-                        <p className="text-xs font-bold text-wood-cream line-clamp-2">{project.title}</p>
-                        <span className="text-[10px] text-wood-amber">#{project.code || project.id}</span>
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-
-            <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-wood-700/50">
-              <span className="text-xs text-wood-muted">{selectedBannerProjects.length} مشروع مختار</span>
-              <button
-                onClick={async () => {
-                  setBannerSaveStatus("جاري الحفظ...");
-                  try {
-                    await saveBannerSettings(selectedBannerProjects);
-                    setBannerSaveStatus("تم حفظ إعدادات البانر بنجاح");
-                  } catch (error) {
-                    console.error("Error saving banner settings:", error);
-                    setBannerSaveStatus("تعذر حفظ إعدادات البانر");
-                  }
-                }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white text-xs font-bold"
-              >
-                <Save className="w-4 h-4" />
-                حفظ الإعدادات
-              </button>
-            </div>
-            {bannerSaveStatus && <p className="text-xs text-wood-gold mt-3 text-left">{bannerSaveStatus}</p>}
-          </div>
-        </main>
-      )}
-
-      {/* ── TAB 2: FOLDERS MANAGER ──────────────────────────────────── */}
+      {/* ── TAB 3: FOLDERS / SECTIONS MANAGER ───────────────────────── */}
       {activeTab === "folders" && (
         <main className="max-w-6xl mx-auto px-4 pt-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-alexandria font-bold text-base text-wood-cream">إدارة الفولدرات والأقسام الشجرية</h2>
+            <h2 className="font-alexandria font-black text-base sm:text-lg text-wood-cream">إدارة أقسام المعرض</h2>
             <button
               onClick={openAddFolder}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-bold text-xs shadow-lg shadow-wood-amber/20 active:scale-95 transition-all"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-black text-xs shadow-lg shadow-wood-amber/20 active:scale-95 transition-all"
             >
-              <FolderPlus className="w-4 h-4" />
-              <span>إضافة فولدر جديد</span>
+              <FolderPlus className="w-4 h-4 stroke-[3]" />
+              <span>إضافة قسم جديد</span>
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {folders.map((fld) => (
-              <div key={fld.id} className="glass-card rounded-2xl border border-wood-700/60 p-5 space-y-4">
-                <div className="flex items-start justify-between gap-3">
+              <div key={fld.id} className="glass-card rounded-2xl border border-wood-700/70 p-5 space-y-4 bg-wood-850/90 shadow-lg">
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <img 
                       src={fld.image || "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80"} 
                       alt={fld.name}
-                      className="w-14 h-14 rounded-xl object-cover border border-wood-700 shrink-0"
+                      className="w-16 h-16 rounded-2xl object-cover border border-wood-700 shrink-0 shadow-md"
                     />
                     <div>
-                      <h3 className="font-alexandria font-bold text-sm sm:text-base text-wood-cream">{fld.name}</h3>
-                      <p className="text-xs text-wood-muted mt-0.5">{fld.desc}</p>
+                      <h3 className="font-alexandria font-black text-base text-wood-cream">{fld.name}</h3>
+                      <span className="text-[11px] font-bold text-wood-amber mt-0.5 block">
+                        {fld.subcategories?.length || 0} أقسام فرعية
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => openEditFolder(fld)}
-                      className="p-2 rounded-lg bg-wood-800 hover:bg-wood-700 text-wood-amber border border-wood-700"
-                      title="تعديل الفولدر"
+                      className="p-2.5 rounded-xl bg-wood-800 hover:bg-wood-700 text-wood-amber border border-wood-700 transition-all"
+                      title="تعديل القسم"
                     >
-                      <Edit3 className="w-4 h-4" />
+                      <Edit3 className="w-4 h-4 stroke-[2.5]" />
                     </button>
                     <button
                       onClick={() => {
-                        if (confirm(`هل أنت متأكد من حذف فولدر "${fld.name}"؟`)) {
+                        if (confirm(`هل أنت متأكد من حذف قسم "${fld.name}"؟`)) {
                           deleteFolder(fld.id);
                         }
                       }}
-                      className="p-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30"
+                      className="p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition-all"
                       title="حذف"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 stroke-[2.5]" />
                     </button>
                   </div>
                 </div>
 
                 {/* Subcategories list */}
                 <div className="pt-3 border-t border-wood-700/50">
-                  <span className="text-[11px] text-wood-amber font-bold block mb-2">الأقسام والتشطيبات التابعة:</span>
+                  <span className="text-[11px] text-wood-muted font-black block mb-2">الأقسام الفرعية التابعة:</span>
                   <div className="flex flex-wrap gap-1.5">
                     {fld.subcategories?.map((sub) => (
-                      <span key={sub.id} className="px-2.5 py-1 rounded-lg bg-wood-850 text-xs text-wood-muted border border-wood-700">
+                      <span key={sub.id} className="px-3 py-1 rounded-xl bg-wood-900 text-xs font-black text-wood-cream border border-wood-700/70">
                         {sub.name}
                       </span>
                     ))}
                   </div>
                 </div>
-
               </div>
             ))}
           </div>
         </main>
       )}
 
-      {/* ── PROJECT ADD/EDIT MODAL WITH DEVICE FILE PICKER ──────────── */}
+      {/* ── PROJECT ADD/EDIT MODAL ───────────────────────────────────── */}
       {projectModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-xl glass-wood rounded-3xl border border-wood-700 p-6 my-8 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-xl glass-wood rounded-3xl border border-wood-700 p-6 my-8 shadow-2xl bg-wood-900">
             <div className="flex items-center justify-between pb-4 border-b border-wood-700 mb-5">
-              <h3 className="font-alexandria font-bold text-base text-wood-cream">
+              <h3 className="font-alexandria font-black text-base text-wood-cream">
                 {editingProject ? "تعديل بيانات العمل" : "إضافة عمل جديد للمعرض"}
               </h3>
-              <button onClick={() => setProjectModalOpen(false)} className="text-wood-muted hover:text-white">
-                <X className="w-5 h-5" />
+              <button onClick={() => setProjectModalOpen(false)} className="text-wood-muted hover:text-white p-1 rounded-lg">
+                <X className="w-5 h-5 stroke-[2.5]" />
               </button>
             </div>
 
             <form onSubmit={handleSaveProject} className="space-y-4 text-xs">
               
               {projectFormError && (
-                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 font-bold text-xs flex items-center gap-2">
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 font-black text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                   <span>{projectFormError}</span>
                 </div>
@@ -778,24 +664,24 @@ export default function AdminPage() {
               
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
-                  <label className="block text-wood-muted font-bold mb-1">اسم العمل / الموديل *</label>
+                  <label className="block text-wood-muted font-black mb-1">اسم العمل / الموديل *</label>
                   <input
                     type="text"
                     value={projectForm.title}
                     onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
                     placeholder="مثال: غرفة نوم ماستر دوكو فرن مط"
-                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream outline-none focus:border-wood-amber"
+                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-bold outline-none focus:border-wood-amber"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-wood-muted font-bold mb-1">كود العمل (Code) *</label>
+                  <label className="block text-wood-muted font-black mb-1">كود العمل (تلقائي)</label>
                   <input
                     type="text"
                     value={projectForm.code}
                     onChange={(e) => setProjectForm({ ...projectForm, code: e.target.value })}
-                    placeholder="مثال: BED-101"
-                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-gold font-bold outline-none focus:border-wood-amber text-center"
+                    placeholder="BED-101"
+                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-gold font-black outline-none focus:border-wood-amber text-center"
                   />
                 </div>
               </div>
@@ -803,7 +689,7 @@ export default function AdminPage() {
               {/* Folder and Subcategory selection */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-wood-muted font-bold mb-1">الفولدر الرئيسي التابع له *</label>
+                  <label className="block text-wood-muted font-black mb-1">القسم الرئيسي *</label>
                   <select
                     value={projectForm.folderId}
                     onChange={(e) => {
@@ -815,7 +701,7 @@ export default function AdminPage() {
                         subcategoryId: f?.subcategories?.[0]?.id || ""
                       });
                     }}
-                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream outline-none focus:border-wood-amber"
+                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-bold outline-none focus:border-wood-amber"
                   >
                     {folders.map(f => (
                       <option key={f.id} value={f.id}>{f.name}</option>
@@ -824,11 +710,11 @@ export default function AdminPage() {
                 </div>
 
                 <div>
-                  <label className="block text-wood-muted font-bold mb-1">القسم الفرعي / نوع التشطيب</label>
+                  <label className="block text-wood-muted font-black mb-1">القسم الفرعي / نوع التشطيب</label>
                   <select
                     value={projectForm.subcategoryId}
                     onChange={(e) => setProjectForm({ ...projectForm, subcategoryId: e.target.value })}
-                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream outline-none focus:border-wood-amber"
+                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-bold outline-none focus:border-wood-amber"
                   >
                     <option value="">بدون قسم فرعي محدد</option>
                     {folders.find(f => f.id === projectForm.folderId)?.subcategories?.map(sub => (
@@ -838,61 +724,39 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Specs */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {/* Finish Specs */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-wood-muted font-bold mb-1">نوع الدهان</label>
+                  <label className="block text-wood-muted font-black mb-1">نوع الدهان والتشطيب</label>
                   <input
                     type="text"
                     value={projectForm.paintType}
                     onChange={(e) => setProjectForm({ ...projectForm, paintType: e.target.value })}
-                    placeholder="دوكو فرن / إستر"
-                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3 py-2 text-wood-cream outline-none focus:border-wood-amber"
+                    placeholder="دوكو فرن مط / إستر وبوليستر"
+                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3 py-2 text-wood-cream font-bold outline-none focus:border-wood-amber"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-wood-muted font-bold mb-1">نوع الخشب</label>
+                  <label className="block text-wood-muted font-black mb-1">نوع الخشب (اختياري)</label>
                   <input
                     type="text"
                     value={projectForm.woodType}
                     onChange={(e) => setProjectForm({ ...projectForm, woodType: e.target.value })}
-                    placeholder="زان / أرو"
-                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3 py-2 text-wood-cream outline-none focus:border-wood-amber"
+                    placeholder="خشب زان أحمر / قشرة أرو"
+                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3 py-2 text-wood-cream font-bold outline-none focus:border-wood-amber"
                   />
                 </div>
-
-                <div>
-                  <label className="block text-wood-muted font-bold mb-1">مدة التنفيذ</label>
-                  <input
-                    type="text"
-                    value={projectForm.duration}
-                    onChange={(e) => setProjectForm({ ...projectForm, duration: e.target.value })}
-                    placeholder="مثال: 10 أيام"
-                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3 py-2 text-wood-cream outline-none focus:border-wood-amber"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-wood-muted font-bold mb-1">الوصف والتفاصيل</label>
-                <textarea
-                  rows={2}
-                  value={projectForm.desc}
-                  onChange={(e) => setProjectForm({ ...projectForm, desc: e.target.value })}
-                  placeholder="وصف جودة التشطيب ونوع المعالجة ومقاومة الرطوبة..."
-                  className="w-full bg-wood-850 border border-wood-700 rounded-xl p-3 text-wood-cream outline-none focus:border-wood-amber"
-                />
               </div>
 
               {/* ── DEVICE IMAGE UPLOAD SECTION ──────────────────────── */}
               <div className="pt-2 border-t border-wood-700/60">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-wood-cream font-bold text-xs flex items-center gap-1.5">
-                    <ImagePlus className="w-4 h-4 text-wood-amber" />
+                  <label className="text-wood-cream font-black text-xs flex items-center gap-1.5">
+                    <ImagePlus className="w-4 h-4 text-wood-amber stroke-[2.5]" />
                     <span>صور العمل من الهاتف أو الكمبيوتر ({projectForm.images.length})</span>
                   </label>
-                  <span className="text-[10px] text-wood-muted">اضغط على أي صورة لجعلها الغلاف الرئيسي</span>
+                  <span className="text-[10px] font-bold text-wood-muted">اضغط على أي صورة لجعلها الغلاف الرئيسي</span>
                 </div>
 
                 {/* Upload Button Box */}
@@ -906,19 +770,19 @@ export default function AdminPage() {
                     className="hidden"
                   />
                   {isProcessingImages ? (
-                    <div className="flex items-center gap-2 text-wood-amber font-bold py-2">
+                    <div className="flex items-center gap-2 text-wood-amber font-black py-2">
                       <Loader2 className="w-5 h-5 animate-spin" />
                       <span>جاري معالجة وضغط الصور...</span>
                     </div>
                   ) : (
                     <>
                       <div className="w-10 h-10 rounded-full bg-wood-amber/20 flex items-center justify-center text-wood-amber mb-2 group-hover:scale-110 transition-transform">
-                        <UploadCloud className="w-5 h-5" />
+                        <UploadCloud className="w-5 h-5 stroke-[2.5]" />
                       </div>
-                      <strong className="text-wood-cream block text-xs">
+                      <strong className="text-wood-cream block text-xs font-black">
                         اضغط هنا لاختيار صور من المعرض أو التقاط من الكاميرا
                       </strong>
-                      <span className="text-[11px] text-wood-muted mt-0.5">
+                      <span className="text-[11px] text-wood-muted mt-0.5 font-bold">
                         يمكنك اختيار عدة صور دفعة واحدة
                       </span>
                     </>
@@ -927,7 +791,7 @@ export default function AdminPage() {
 
                 {/* Preview Grid of Selected Images */}
                 {projectForm.images.length > 0 && (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 mt-3 max-h-48 overflow-y-auto p-1 bg-wood-900/60 rounded-xl border border-wood-700/50">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 mt-3 max-h-48 overflow-y-auto p-1.5 bg-wood-900/80 rounded-xl border border-wood-700/50">
                     {projectForm.images.map((imgUrl, idx) => (
                       <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group border border-wood-700 bg-wood-850">
                         <img src={imgUrl} alt={`preview ${idx + 1}`} className="w-full h-full object-cover" />
@@ -942,7 +806,7 @@ export default function AdminPage() {
                           <button
                             type="button"
                             onClick={() => makeCoverProjectImage(idx)}
-                            className="absolute top-1 right-1 bg-black/70 hover:bg-wood-amber text-white px-1.5 py-0.5 rounded text-[9px] font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute top-1 right-1 bg-black/80 hover:bg-wood-amber text-white px-1.5 py-0.5 rounded text-[9px] font-black opacity-0 group-hover:opacity-100 transition-opacity"
                             title="تعيين كصورة غلاف رئيسية"
                           >
                             تعيين كغلاف
@@ -956,13 +820,12 @@ export default function AdminPage() {
                           className="absolute bottom-1 left-1 p-1 rounded-full bg-rose-600/90 text-white hover:bg-rose-500 shadow-md transition-all"
                           title="حذف الصورة"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-3 h-3 stroke-[2.5]" />
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
-
               </div>
 
               {/* Featured toggle */}
@@ -971,23 +834,23 @@ export default function AdminPage() {
                   type="checkbox"
                   checked={projectForm.isFeatured}
                   onChange={(e) => setProjectForm({ ...projectForm, isFeatured: e.target.checked })}
-                  className="w-4 h-4 rounded text-wood-amber focus:ring-0 bg-wood-850 border-wood-700"
+                  className="w-4 h-4 rounded text-wood-amber focus:ring-0 bg-wood-850 border-wood-700 accent-wood-amber"
                 />
-                <span className="text-wood-cream font-bold">عرض كعمل مميز في الصفحة الرئيسية (Featured)</span>
+                <span className="text-wood-cream font-black text-xs">عرض كعمل مميز في الصفحة الرئيسية</span>
               </label>
 
               <div className="flex items-center justify-end gap-2 pt-4 border-t border-wood-700">
                 <button
                   type="button"
                   onClick={() => setProjectModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-muted font-bold"
+                  className="px-4 py-2 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-muted font-black"
                 >
                   إلغاء
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingProject || isProcessingImages}
-                  className="px-6 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-bold shadow-lg shadow-wood-amber/20 disabled:opacity-50 flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-black shadow-lg shadow-wood-amber/20 disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95"
                 >
                   {isSavingProject ? (
                     <>
@@ -1005,57 +868,46 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ── FOLDER ADD/EDIT MODAL WITH DEVICE FILE PICKER ───────────── */}
+      {/* ── FOLDER / SECTION ADD/EDIT MODAL ──────────────────────────── */}
       {folderModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-lg glass-wood rounded-3xl border border-wood-700 p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-lg glass-wood rounded-3xl border border-wood-700 p-6 shadow-2xl bg-wood-900">
             <div className="flex items-center justify-between pb-4 border-b border-wood-700 mb-5">
-              <h3 className="font-alexandria font-bold text-base text-wood-cream">
-                {editingFolder ? "تعديل الفولدر" : "إضافة فولدر جديد"}
+              <h3 className="font-alexandria font-black text-base text-wood-cream">
+                {editingFolder ? "تعديل القسم" : "إضافة قسم جديد"}
               </h3>
-              <button onClick={() => setFolderModalOpen(false)} className="text-wood-muted hover:text-white">
-                <X className="w-5 h-5" />
+              <button onClick={() => setFolderModalOpen(false)} className="text-wood-muted hover:text-white p-1 rounded-lg">
+                <X className="w-5 h-5 stroke-[2.5]" />
               </button>
             </div>
 
             <form onSubmit={handleSaveFolder} className="space-y-4 text-xs">
               {folderFormError && (
-                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 font-bold text-xs flex items-center gap-2">
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 font-black text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                   <span>{folderFormError}</span>
                 </div>
               )}
 
               <div>
-                <label className="block text-wood-muted font-bold mb-1">اسم الفولدر *</label>
+                <label className="block text-wood-muted font-black mb-1">اسم القسم *</label>
                 <input
                   type="text"
                   value={folderForm.name}
                   onChange={(e) => setFolderForm({ ...folderForm, name: e.target.value })}
                   placeholder="مثال: غرف نوم ماستر"
-                  className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream outline-none focus:border-wood-amber"
-                />
-              </div>
-
-              <div>
-                <label className="block text-wood-muted font-bold mb-1">وصف مختصر</label>
-                <input
-                  type="text"
-                  value={folderForm.desc}
-                  onChange={(e) => setFolderForm({ ...folderForm, desc: e.target.value })}
-                  placeholder="تشطيبات دوكو وإستر لغرف النوم"
-                  className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream outline-none focus:border-wood-amber"
+                  className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-bold outline-none focus:border-wood-amber"
                 />
               </div>
 
               {/* Folder Cover Image from device */}
               <div>
-                <label className="block text-wood-muted font-bold mb-1">صورة غلاف الفولدر</label>
+                <label className="block text-wood-muted font-black mb-1">صورة غلاف القسم</label>
                 <div className="flex items-center gap-3">
                   {folderForm.image && (
-                    <img src={folderForm.image} alt="preview" className="w-14 h-14 rounded-xl object-cover border border-wood-700 shrink-0" />
+                    <img src={folderForm.image} alt="preview" className="w-14 h-14 rounded-2xl object-cover border border-wood-700 shrink-0 shadow-md" />
                   )}
-                  <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-wood-amber/50 bg-wood-850/60 hover:bg-wood-800 text-wood-amber font-bold text-xs transition-colors">
+                  <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 p-3.5 rounded-xl border border-dashed border-wood-amber/50 bg-wood-850/60 hover:bg-wood-800 text-wood-amber font-black text-xs transition-colors">
                     <input
                       type="file"
                       accept="image/*"
@@ -1067,8 +919,8 @@ export default function AdminPage() {
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
-                        <UploadCloud className="w-4 h-4" />
-                        <span>اختر صورة غلاف من الجهاز</span>
+                        <UploadCloud className="w-4 h-4 stroke-[2.5]" />
+                        <span>اختر صورة غلاف من جهازك</span>
                       </>
                     )}
                   </label>
@@ -1076,15 +928,15 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-wood-muted font-bold mb-1">
-                  الأقسام والتشطيبات التابعة (اكتب كل قسم في سطر جديد)
+                <label className="block text-wood-muted font-black mb-1">
+                  الأقسام والتشطيبات التابعة (اكتب كل قسم فرعي في سطر جديد)
                 </label>
                 <textarea
                   rows={4}
                   value={folderForm.subcategoriesText}
                   onChange={(e) => setFolderForm({ ...folderForm, subcategoriesText: e.target.value })}
-                  placeholder="غرف نوم دوكو فرن مط&#10;غرف نوم إستر وتعتيق&#10;قشرة أرو"
-                  className="w-full bg-wood-850 border border-wood-700 rounded-xl p-3 text-wood-cream outline-none focus:border-wood-amber"
+                  placeholder="دوكو فرن مط&#10;إستر وبوليستر وتعتيق&#10;قشرة أرو وزان"
+                  className="w-full bg-wood-850 border border-wood-700 rounded-xl p-3 text-wood-cream font-bold outline-none focus:border-wood-amber leading-relaxed"
                 />
               </div>
 
@@ -1092,14 +944,14 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => setFolderModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-muted font-bold"
+                  className="px-4 py-2 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-muted font-black"
                 >
                   إلغاء
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingFolder || isProcessingFolderImage}
-                  className="px-6 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-bold shadow-lg shadow-wood-amber/20 disabled:opacity-50 flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-black shadow-lg shadow-wood-amber/20 disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95"
                 >
                   {isSavingFolder ? (
                     <>
@@ -1107,7 +959,7 @@ export default function AdminPage() {
                       <span>جاري الحفظ...</span>
                     </>
                   ) : (
-                    <span>حفظ الفولدر</span>
+                    <span>حفظ القسم</span>
                   )}
                 </button>
               </div>

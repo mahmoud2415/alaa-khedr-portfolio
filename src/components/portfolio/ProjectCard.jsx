@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { MessageCircle, Eye, Share2, ChevronLeft, ChevronRight, Tag, Sparkles } from 'lucide-react';
+import { MessageCircle, Eye, ChevronLeft, ChevronRight, Share2, Check } from 'lucide-react';
 
 export default function ProjectCard({ project, onOpenLightbox }) {
   const { craftsmanInfo } = usePortfolio();
-  const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [copied, setCopied] = useState(false);
 
   const images = project.images && project.images.length > 0 
     ? project.images 
     : ["https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80"];
 
-  const goToProject = () => {
-    navigate(`/project/${project.id}`);
+  const handleCardClick = () => {
+    if (onOpenLightbox) {
+      onOpenLightbox(images, currentImageIndex, project.title);
+    }
   };
 
   const nextImage = (e) => {
@@ -28,41 +29,17 @@ export default function ProjectCard({ project, onOpenLightbox }) {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  // WhatsApp Inquiry URL with exact requested opening
-  const waMessage = `السلام عليكم، عايز استفسر عن تفاصيل وسعر الشغل ده:
-
-📋 *بيانات الشغل:*
-▪️ كود الشغل: #${project.code || project.id}
-▪️ اسم الموديل: ${project.title}
-${project.paintType ? `▪️ نوع الدهان والتشطيب: ${project.paintType}\n` : ""}${project.woodType ? `▪️ نوع الخشب: ${project.woodType}\n` : ""}${project.color ? `▪️ اللون واللمعان: ${project.color}\n` : ""}
-🔗 رابط الشغل:
-${window.location.origin}/project/${project.id}`;
+  // WhatsApp Inquiry URL
+  const currentImg = images[currentImageIndex] || images[0];
+  const waMessage = `▪️ الموديل: ${project.title}
+${project.paintType ? `▪️ نوع الدهان: ${project.paintType}\n` : ""}▪️ صورة الشغل: ${currentImg}`;
 
   const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waMessage)}`;
 
-  // Share action
-  const handleShare = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const shareUrl = `${window.location.origin}/project/${project.id}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: project.title,
-          text: `شاهد تشطيب ${project.title} - ورشة علاء خضر (كود #${project.code})`,
-          url: shareUrl
-        });
-      } catch (err) {}
-    } else {
-      navigator.clipboard.writeText(shareUrl);
-      alert("تم نسخ رابط هذا الشغل بنجاح!");
-    }
-  };
-
   return (
     <div 
-      onClick={goToProject}
-      className="group rounded-2xl overflow-hidden glass-card hover:border-wood-amber/50 transition-all duration-300 shadow-xl flex flex-col justify-between bg-wood-850/90 cursor-pointer"
+      onClick={handleCardClick}
+      className="group rounded-3xl overflow-hidden glass-card hover:border-wood-amber/50 transition-all duration-300 shadow-xl flex flex-col justify-between bg-wood-850/90 cursor-pointer"
     >
       
       {/* Image Carousel / Viewer */}
@@ -76,29 +53,14 @@ ${window.location.origin}/project/${project.id}`;
           loading="lazy"
         />
 
-        {/* Gradient Shadow */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none"></div>
-
-        {/* Code Badge (Top Right) */}
-        <div className="absolute top-3 right-3 flex items-center gap-1 px-3 py-1 rounded-xl bg-wood-amber text-white font-alexandria font-black text-xs shadow-lg shadow-wood-amber/30">
-          <Tag className="w-3.5 h-3.5" />
-          <span>#{project.code || project.id}</span>
-        </div>
-
-        {/* Featured Badge (Top Left) */}
-        {project.isFeatured && (
-          <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-xl bg-wood-900/90 backdrop-blur-md border border-wood-gold/40 text-wood-gold text-[10px] font-bold">
-            <Sparkles className="w-3 h-3 text-wood-gold" />
-            <span>مميز</span>
-          </div>
-        )}
+        {/* Clean Natural Image without dark gradient */}
 
         {/* Image Controls if multiple images */}
         {images.length > 1 && (
           <>
             <button
               onClick={prevImage}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/60 text-white/90 hover:bg-black/90 transition-all opacity-80 group-hover:opacity-100"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/50 text-white/90 hover:bg-black/80 transition-all opacity-80 group-hover:opacity-100 z-10"
               title="الصورة السابقة"
             >
               <ChevronRight className="w-4 h-4" />
@@ -106,19 +68,19 @@ ${window.location.origin}/project/${project.id}`;
 
             <button
               onClick={nextImage}
-              className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/60 text-white/90 hover:bg-black/90 transition-all opacity-80 group-hover:opacity-100"
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/50 text-white/90 hover:bg-black/80 transition-all opacity-80 group-hover:opacity-100 z-10"
               title="الصورة التالية"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
             {/* Dots indicator */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/50 px-2.5 py-1 rounded-full backdrop-blur-sm">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded-full backdrop-blur-sm z-10">
               {images.map((_, idx) => (
                 <span
                   key={idx}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    idx === currentImageIndex ? 'bg-wood-gold w-3' : 'bg-white/40'
+                  className={`h-1.5 rounded-full transition-all ${
+                    idx === currentImageIndex ? 'bg-wood-amber w-3.5' : 'bg-white/40 w-1.5'
                   }`}
                 />
               ))}
@@ -126,89 +88,73 @@ ${window.location.origin}/project/${project.id}`;
           </>
         )}
 
-        {/* Quick View Button */}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onOpenLightbox && onOpenLightbox(images, currentImageIndex);
-          }}
-          className="absolute bottom-3 right-3 p-2 rounded-xl bg-black/60 hover:bg-black/90 text-white text-xs backdrop-blur-sm transition-all z-10"
-          title="تكبير الصورة"
-        >
+        {/* Quick Zoom Icon */}
+        <div className="absolute top-3 left-3 p-2 rounded-xl bg-black/60 text-white/90 backdrop-blur-sm group-hover:bg-wood-amber group-hover:text-white transition-colors pointer-events-none z-10">
           <Eye className="w-4 h-4" />
-        </button>
+        </div>
 
         {/* Share Button */}
         <button
-          onClick={handleShare}
-          className="absolute bottom-3 left-3 p-2 rounded-xl bg-black/60 hover:bg-black/90 text-white text-xs backdrop-blur-sm transition-all z-10"
+          onClick={async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const shareUrl = `${window.location.origin}/project/${project.id}`;
+            if (navigator.share) {
+              try {
+                await navigator.share({
+                  title: project.title,
+                  text: `شاهد ${project.title} - ورشة علاء خضر`,
+                  url: shareUrl
+                });
+              } catch (err) {}
+            } else {
+              navigator.clipboard.writeText(shareUrl);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }
+          }}
+          className="absolute top-3 right-3 p-2 rounded-xl bg-black/60 hover:bg-wood-amber text-white/90 backdrop-blur-sm transition-all shadow-md active:scale-90 z-10"
           title="مشاركة العمل"
         >
-          <Share2 className="w-4 h-4" />
+          {copied ? (
+            <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
+          ) : (
+            <Share2 className="w-4 h-4" />
+          )}
         </button>
+
       </div>
 
       {/* Card Content & Details */}
-      <div className="p-4 flex-1 flex flex-col justify-between">
-        <div>
-          {/* Title */}
-          <h3 className="font-alexandria font-bold text-sm sm:text-base text-wood-cream group-hover:text-wood-gold transition-colors line-clamp-2">
-            {project.title}
-          </h3>
+      <div className="p-3.5 sm:p-4 flex flex-col gap-2">
+        {/* Title */}
+        <h3 className="font-alexandria font-black text-sm sm:text-base text-wood-cream group-hover:text-wood-gold transition-colors line-clamp-2 leading-snug">
+          {project.title}
+        </h3>
 
-          {/* Description */}
-          {project.desc && (
-            <p className="text-xs text-wood-muted/90 mt-1.5 line-clamp-2 leading-relaxed">
-              {project.desc}
-            </p>
-          )}
+        {/* Inline Finish Badge & Compact WhatsApp Link */}
+        <div className="flex items-center justify-between gap-2 pt-1">
+          {project.paintType ? (
+            <span className="inline-block px-2.5 py-1 rounded-xl bg-wood-800 text-[11px] text-wood-amber font-black border border-wood-700/60">
+              ✨ {project.paintType}
+            </span>
+          ) : <span />}
 
-          {/* Specifications Chips */}
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {project.paintType && (
-              <span className="px-2 py-0.5 rounded-lg bg-wood-800 text-[11px] text-wood-amber font-medium border border-wood-700/60">
-                🎨 {project.paintType}
-              </span>
-            )}
-            {project.woodType && (
-              <span className="px-2 py-0.5 rounded-lg bg-wood-800 text-[11px] text-wood-muted border border-wood-700/60">
-                🪵 {project.woodType}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Bottom Actions: WhatsApp Direct Code Inquiry */}
-        <div className="mt-4 pt-3 border-t border-wood-700/60 flex items-center gap-2">
-          
           <a
             href={waUrl}
             target="_blank"
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all active:scale-95 z-10"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-wood-800 hover:bg-wood-amber text-wood-muted hover:text-white font-black text-xs border border-wood-700/70 shadow-sm transition-all active:scale-95 shrink-0"
+            title="استفسار عبر واتساب"
           >
-            <MessageCircle className="w-4 h-4 fill-white" />
-            <span>استفسر عن هذا الشغل</span>
+            <MessageCircle className="w-3.5 h-3.5 text-wood-amber stroke-[2.5]" />
+            <span>واتساب</span>
           </a>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              goToProject();
-            }}
-            className="p-2.5 rounded-xl bg-wood-800 hover:bg-wood-700 text-wood-cream border border-wood-700 transition-colors z-10"
-            title="عرض التفاصيل"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-
         </div>
-
       </div>
 
     </div>
   );
 }
+

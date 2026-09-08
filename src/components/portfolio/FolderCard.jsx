@@ -1,57 +1,77 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Folder, ChevronLeft, Bed, Utensils, DoorOpen, Layers, Armchair } from 'lucide-react';
-
-const ICON_MAP = {
-  Bed,
-  Utensils,
-  DoorOpen,
-  Layers,
-  Armchair
-};
+import { ArrowLeft, Share2, Check } from 'lucide-react';
 
 export default function FolderCard({ folder }) {
   const { getProjectsByFolder } = usePortfolio();
   const folderProjects = getProjectsByFolder(folder.id);
-  const IconComponent = ICON_MAP[folder.icon] || Folder;
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}/folder/${folder.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: folder.name,
+          text: `شاهد أعمال وتشطيبات ${folder.name} - ورشة علاء خضر`,
+          url: shareUrl
+        });
+      } catch (err) {}
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <Link
       to={`/folder/${folder.id}`}
-      className="group block relative rounded-2xl overflow-hidden glass-card hover:border-wood-amber/60 transition-all duration-300 transform hover:-translate-y-1 shadow-lg"
+      className="group block relative rounded-3xl overflow-hidden glass-card hover:border-wood-amber/70 transition-all duration-300 transform hover:-translate-y-1.5 shadow-2xl bg-wood-850/90"
     >
       {/* Folder Cover Image */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-wood-850">
+      <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-wood-900">
         <img
           src={folder.image || "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80"}
           alt={folder.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           loading="lazy"
         />
-        
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0F0D0B] via-[#0F0D0B]/60 to-transparent"></div>
 
-        {/* Top Folder Badge */}
-        <div className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-wood-900/90 backdrop-blur-md border border-wood-700/80 text-xs font-bold text-wood-cream shadow-md">
-          <IconComponent className="w-3.5 h-3.5 text-wood-amber" />
-          <span>{folderProjects.length} أعمال منفذة</span>
+        {/* Top Share Button */}
+        <button
+          onClick={handleShare}
+          className="absolute top-4 right-4 p-2.5 rounded-2xl bg-black/70 hover:bg-wood-amber text-white backdrop-blur-md border border-white/15 transition-all shadow-xl active:scale-90 z-10"
+          title="مشاركة القسم"
+        >
+          {copied ? (
+            <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
+          ) : (
+            <Share2 className="w-4 h-4 stroke-[2.5]" />
+          )}
+        </button>
+
+        {/* Top Count Tag */}
+        <div className="absolute top-4 left-4 px-3.5 py-1.5 rounded-2xl bg-black/70 backdrop-blur-md border border-white/15 text-xs sm:text-sm font-black text-wood-gold shadow-xl">
+          <span>{folderProjects.length} أعمال</span>
         </div>
-      </div>
 
-      {/* Folder Content */}
-      <div className="p-5 sm:p-6 relative">
-        <h3 className="font-alexandria font-bold text-base text-wood-cream group-hover:text-wood-gold transition-colors flex items-center justify-between">
-          <span>{folder.name}</span>
-          <ChevronLeft className="w-4 h-4 text-wood-muted group-hover:text-wood-amber group-hover:-translate-x-1 transition-all" />
-        </h3>
-        
-        <p className="text-xs sm:text-sm text-wood-muted/80 mt-2 line-clamp-2 leading-6">
-          {folder.desc}
-        </p>
+        {/* Bottom Title Bar */}
+        <div className="absolute bottom-0 right-0 left-0 p-5 sm:p-6 flex items-center justify-between gap-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+          <h3 className="font-alexandria font-black text-lg sm:text-xl text-wood-cream group-hover:text-wood-gold transition-colors">
+            {folder.name}
+          </h3>
 
+          <div className="p-3 rounded-2xl bg-wood-amber group-hover:bg-wood-gold text-white transition-colors shadow-lg shadow-wood-amber/30 shrink-0">
+            <ArrowLeft className="w-5 h-5 stroke-[2.5] group-hover:-translate-x-1 transition-transform" />
+          </div>
+        </div>
       </div>
     </Link>
   );
 }
+
+

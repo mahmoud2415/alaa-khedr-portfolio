@@ -65,9 +65,9 @@ export default function Footer() {
               href={craftsmanInfo.whatsappDirectUrl}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-3 text-xs hover:text-emerald-400 transition-colors"
+              className="flex items-center gap-3 text-xs hover:text-wood-gold transition-colors"
             >
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0 border border-emerald-500/20">
+              <div className="w-8 h-8 rounded-lg bg-wood-850 flex items-center justify-center text-wood-amber shrink-0 border border-wood-700">
                 <MessageCircle className="w-4 h-4" />
               </div>
               <span>محادثة واتساب سريعة</span>
