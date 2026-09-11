@@ -50,12 +50,19 @@ export default function ProjectDetailsPage() {
     ? project.images 
     : ["https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80"];
 
-  // WhatsApp Inquiry Message with pure work details (no intro)
-  const waMessage = `▪️ كود الشغل: #${project.code || project.id}
-▪️ اسم الموديل: ${project.title}
-${project.paintType ? `▪️ نوع الدهان والتشطيب: ${project.paintType}\n` : ""}${project.woodType ? `▪️ نوع الخشب: ${project.woodType}\n` : ""}${project.color ? `▪️ اللون واللمعان: ${project.color}\n` : ""}▪️ رابط الشغل: ${window.location.href}`;
+  // WhatsApp Inquiry Message with full polite details
+  const waLines = [
+    `السلام عليكم أ / علاء خضر`,
+    `حبيت استفسر عن تفاصيل وسعر هذا العمل:`,
+    `▪️ اسم الموديل: ${project.title}`,
+    `▪️ كود العمل: #${project.code || project.id}`,
+    project.paintType ? `▪️ نوع الدهان والتشطيب: ${project.paintType}` : '',
+    project.woodType ? `▪️ نوع الخشب: ${project.woodType}` : '',
+    project.color ? `▪️ اللون واللمعان: ${project.color}` : '',
+    `▪️ رابط العمل: ${window.location.href}`
+  ].filter(Boolean).join('\n');
 
-  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waMessage)}`;
+  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waLines)}`;
 
   // Share
   const handleShare = async () => {

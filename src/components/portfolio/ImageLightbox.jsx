@@ -47,8 +47,16 @@ export default function ImageLightbox({ images = [], initialIndex = 0, projectTi
   if (!isOpen || images.length === 0) return null;
 
   const currentImg = images[currentIndex] || images[0];
-  const waMessage = `${projectTitle ? `▪️ الموديل: ${projectTitle}\n` : ""}▪️ صورة الشغل: ${currentImg}`;
-  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waMessage)}`;
+  const isWebUrl = typeof currentImg === 'string' && currentImg.startsWith('http');
+  const waLines = [
+    `السلام عليكم أ / علاء خضر`,
+    `حبيت استفسر عن تفاصيل وسعر هذا العمل:`,
+    projectTitle ? `▪️ الموديل: ${projectTitle}` : '',
+    isWebUrl ? `▪️ صورة العمل: ${currentImg}` : '',
+    `▪️ رابط المعرض: ${window.location.href}`
+  ].filter(Boolean).join('\n');
+
+  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waLines)}`;
 
   return (
     <div 

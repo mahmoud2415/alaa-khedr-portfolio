@@ -30,11 +30,16 @@ export default function ProjectCard({ project, onOpenLightbox }) {
   };
 
   // WhatsApp Inquiry URL
-  const currentImg = images[currentImageIndex] || images[0];
-  const waMessage = `▪️ الموديل: ${project.title}
-${project.paintType ? `▪️ نوع الدهان: ${project.paintType}\n` : ""}▪️ صورة الشغل: ${currentImg}`;
+  const waLines = [
+    `السلام عليكم أ / علاء خضر`,
+    `حبيت استفسر عن تفاصيل وسعر هذا العمل:`,
+    `▪️ الموديل: ${project.title || 'عمل من المعرض'}`,
+    project.code ? `▪️ كود العمل: #${project.code}` : '',
+    project.paintType ? `▪️ نوع الدهان: ${project.paintType}` : '',
+    `▪️ رابط المعرض: ${window.location.origin}/folder/${project.folderId || ''}`
+  ].filter(Boolean).join('\n');
 
-  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waMessage)}`;
+  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waLines)}`;
 
   return (
     <div 
