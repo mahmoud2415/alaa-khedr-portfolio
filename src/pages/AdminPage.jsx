@@ -132,7 +132,6 @@ export default function AdminPage() {
     code: "",
     desc: "",
     folderId: "",
-    subcategoryId: "",
     paintType: "دوكو فرن مط",
     woodType: "خشب زان أحمر",
     color: "",
@@ -151,8 +150,7 @@ export default function AdminPage() {
     id: "",
     name: "",
     desc: "",
-    image: "",
-    subcategoriesText: "" // newline separated subcategory names
+    image: ""
   });
 
   // Action notification toast
@@ -250,7 +248,6 @@ export default function AdminPage() {
       return;
     }
     const defaultFolder = folders[0]?.id || "";
-    const defaultSub = folders[0]?.subcategories?.[0]?.id || "";
     setEditingProject(null);
     setProjectFormError("");
     setProjectForm({
@@ -258,7 +255,6 @@ export default function AdminPage() {
       code: `WOOD-${Math.floor(100 + Math.random() * 900)}`,
       desc: "",
       folderId: defaultFolder,
-      subcategoryId: defaultSub,
       paintType: "دوكو فرن إيطالي",
       woodType: "خشب زان أحمر",
       color: "أوف وايت ناعم",
@@ -277,7 +273,6 @@ export default function AdminPage() {
       code: proj.code || "",
       desc: proj.desc || "",
       folderId: proj.folderId || folders[0]?.id || "",
-      subcategoryId: proj.subcategoryId || "",
       paintType: proj.paintType || "",
       woodType: proj.woodType || "",
       color: proj.color || "",
@@ -350,7 +345,6 @@ export default function AdminPage() {
       code: projectForm.code.trim().toUpperCase() || `WOOD-${Math.floor(100 + Math.random() * 900)}`,
       desc: projectForm.desc.trim(),
       folderId: projectForm.folderId || folders[0]?.id || "bedrooms",
-      subcategoryId: projectForm.subcategoryId || "",
       paintType: projectForm.paintType.trim() || "دوكو فرن مط",
       woodType: projectForm.woodType.trim() || "خشب زان أحمر",
       color: projectForm.color.trim() || "",
@@ -381,8 +375,7 @@ export default function AdminPage() {
       id: "",
       name: "",
       desc: "",
-      image: "",
-      subcategoriesText: "دوكو فرن مط\nإستر وبوليستر وتعتيق\nقشرة أرو وزان\nتجديد ودهان قديم"
+      image: ""
     });
     setFolderModalOpen(true);
   };
@@ -394,8 +387,7 @@ export default function AdminPage() {
       id: folder.id,
       name: folder.name || "",
       desc: folder.desc || "",
-      image: folder.image || "",
-      subcategoriesText: (folder.subcategories || []).map(s => s.name).join("\n")
+      image: folder.image || ""
     });
     setFolderModalOpen(true);
   };
@@ -428,21 +420,12 @@ export default function AdminPage() {
       return;
     }
 
-    const subcategories = folderForm.subcategoriesText
-      .split("\n")
-      .map(name => name.trim())
-      .filter(name => name.length > 0)
-      .map((name, idx) => ({
-        id: `${(folderForm.id || folderForm.name).toLowerCase().replace(/\s+/g, '_')}_sub_${idx + 1}`,
-        name
-      }));
-
     const folderData = {
       name: folderForm.name.trim(),
       desc: "",
       image: folderForm.image || "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80",
       icon: "Layers",
-      subcategories
+      subcategories: []
     };
 
     setIsSavingFolder(true);
@@ -822,9 +805,6 @@ export default function AdminPage() {
                     />
                     <div>
                       <h3 className="font-alexandria font-black text-base text-wood-cream">{fld.name}</h3>
-                      <span className="text-[11px] font-bold text-wood-amber mt-0.5 block">
-                        {fld.subcategories?.length || 0} أقسام فرعية
-                      </span>
                     </div>
                   </div>
 
@@ -847,18 +827,6 @@ export default function AdminPage() {
                     >
                       <Trash2 className="w-4 h-4 stroke-[2.5]" />
                     </button>
-                  </div>
-                </div>
-
-                {/* Subcategories list */}
-                <div className="pt-3 border-t border-wood-700/50">
-                  <span className="text-[11px] text-wood-muted font-black block mb-2">الأقسام الفرعية التابعة:</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {fld.subcategories?.map((sub) => (
-                      <span key={sub.id} className="px-3 py-1 rounded-xl bg-wood-900 text-xs font-black text-wood-cream border border-wood-700/70">
-                        {sub.name}
-                      </span>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -900,42 +868,18 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* Folder and Subcategory selection */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-wood-muted font-black mb-1">القسم الرئيسي *</label>
-                  <select
-                    value={projectForm.folderId}
-                    onChange={(e) => {
-                      const fId = e.target.value;
-                      const f = folders.find(x => x.id === fId);
-                      setProjectForm({ 
-                        ...projectForm, 
-                        folderId: fId,
-                        subcategoryId: f?.subcategories?.[0]?.id || ""
-                      });
-                    }}
-                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-bold outline-none focus:border-wood-amber"
-                  >
-                    {folders.map(f => (
-                      <option key={f.id} value={f.id}>{f.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-wood-muted font-black mb-1">القسم الفرعي / نوع التشطيب</label>
-                  <select
-                    value={projectForm.subcategoryId}
-                    onChange={(e) => setProjectForm({ ...projectForm, subcategoryId: e.target.value })}
-                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-bold outline-none focus:border-wood-amber"
-                  >
-                    <option value="">بدون قسم فرعي محدد</option>
-                    {folders.find(f => f.id === projectForm.folderId)?.subcategories?.map(sub => (
-                      <option key={sub.id} value={sub.id}>{sub.name}</option>
-                    ))}
-                  </select>
-                </div>
+              {/* Folder selection */}
+              <div>
+                <label className="block text-wood-muted font-black mb-1">القسم الرئيسي *</label>
+                <select
+                  value={projectForm.folderId}
+                  onChange={(e) => setProjectForm({ ...projectForm, folderId: e.target.value })}
+                  className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-bold outline-none focus:border-wood-amber"
+                >
+                  {folders.map(f => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Finish Specs */}
@@ -1139,19 +1083,6 @@ export default function AdminPage() {
                     )}
                   </label>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-wood-muted font-black mb-1">
-                  الأقسام والتشطيبات التابعة (اكتب كل قسم فرعي في سطر جديد)
-                </label>
-                <textarea
-                  rows={4}
-                  value={folderForm.subcategoriesText}
-                  onChange={(e) => setFolderForm({ ...folderForm, subcategoriesText: e.target.value })}
-                  placeholder="دوكو فرن مط&#10;إستر وبوليستر وتعتيق&#10;قشرة أرو وزان"
-                  className="w-full bg-wood-850 border border-wood-700 rounded-xl p-3 text-wood-cream font-bold outline-none focus:border-wood-amber leading-relaxed"
-                />
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-4 border-t border-wood-700">

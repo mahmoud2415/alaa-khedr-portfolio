@@ -1,29 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 import ProjectCard from '../components/portfolio/ProjectCard';
 import ImageLightbox from '../components/portfolio/ImageLightbox';
-import { ArrowRight, ArrowLeft, Share2, Check, Sparkles, Folder } from 'lucide-react';
+import { ArrowRight, Share2, Check, Sparkles, Folder } from 'lucide-react';
 
 export default function FolderDetailsPage() {
   const { folderId } = useParams();
   const { getFolderById, getProjectsByFolder } = usePortfolio();
 
   const folder = getFolderById(folderId);
-  const [selectedSubcategory, setSelectedSubcategory] = useState(
-    () => folder?.subcategories?.[0]?.id || null
-  );
   const [copied, setCopied] = useState(false);
-  const galleryRef = useRef(null);
-
-  // Update selected subcategory when folderId changes
-  React.useEffect(() => {
-    if (folder?.subcategories?.length > 0) {
-      setSelectedSubcategory(folder.subcategories[0].id);
-    } else {
-      setSelectedSubcategory(null);
-    }
-  }, [folderId, folder]);
 
   // Lightbox State
   const [lightboxData, setLightboxData] = useState({ isOpen: false, images: [], index: 0, title: '' });
@@ -53,14 +40,6 @@ export default function FolderDetailsPage() {
     }
   };
 
-  const handleSelectSubcategory = (subId) => {
-    setSelectedSubcategory(subId);
-    // Smooth scroll to gallery after selecting
-    if (galleryRef.current) {
-      galleryRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   if (!folder) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
@@ -73,19 +52,12 @@ export default function FolderDetailsPage() {
     );
   }
 
-  const projects = getProjectsByFolder(folder.id, selectedSubcategory);
-
-  // Helper to get concise subcategory display name
-  const getCleanSubcategoryName = (name) => {
-    return name
-      .replace(/^(غرف نوم|غرف السفرة والنيش|سفرة ونيش|أبواب|مطابخ|صالونات)\s*/, '')
-      .trim();
-  };
+  const projects = getProjectsByFolder(folder.id);
 
   return (
     <div className="min-h-screen pb-20">
       
-      {/* ── 1. COMPACT STICKY TOP BAR (فقط زر رجوع وزر مشاركة) ──────── */}
+      {/* ── 1. COMPACT STICKY TOP BAR ──────── */}
       <div className="sticky top-0 z-30 bg-[#0F0D0B]/95 backdrop-blur-xl border-b border-wood-700/60 shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-2.5 sm:py-3 flex items-center justify-between">
           
@@ -95,7 +67,7 @@ export default function FolderDetailsPage() {
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-wood-850 hover:bg-wood-800 text-wood-cream border border-wood-700 text-xs sm:text-sm font-black transition-all active:scale-95 shrink-0"
           >
             <ArrowRight className="w-4 h-4 text-wood-amber stroke-[2.5]" />
-            <span>رجوع</span>
+            <span>رجوع للرئيسية</span>
           </Link>
 
           {/* Share Button */}
@@ -122,50 +94,21 @@ export default function FolderDetailsPage() {
 
       <div className="max-w-6xl mx-auto px-4 pt-6">
 
-        {/* ── 2. RECTANGULAR SUB-CATEGORY CARDS GRID (مربعات / مستطيلات الأقسام فقط بدون بطاقة الكل) ── */}
-        {folder.subcategories && folder.subcategories.length > 0 && (
-          <section className="mb-8">
-            <div className="grid grid-cols-3 gap-2 sm:gap-3.5 md:gap-4">
-              {folder.subcategories.map((sub) => {
-                const cleanName = getCleanSubcategoryName(sub.name);
-                const isSelected = selectedSubcategory === sub.id;
-
-                return (
-                  <button
-                    key={sub.id}
-                    onClick={() => handleSelectSubcategory(sub.id)}
-                    className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-between text-right transition-all duration-300 transform active:scale-95 shadow-md ${
-                      isSelected
-                        ? 'bg-wood-amber text-white border-2 border-wood-amber shadow-wood-amber/30 ring-2 ring-wood-amber/40 scale-[1.02]'
-                        : 'bg-wood-850/90 hover:bg-wood-800 text-wood-cream border border-wood-700/80 hover:border-wood-amber/50'
-                    }`}
-                  >
-                    <h3 className="font-alexandria font-black text-[11px] sm:text-sm md:text-base leading-snug line-clamp-2">
-                      {cleanName}
-                    </h3>
-                    <ArrowLeft className={`w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5] shrink-0 mr-1 sm:mr-2 ${
-                      isSelected ? 'text-white -translate-x-1' : 'text-wood-muted'
-                    }`} />
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        )}
+        {/* ── 2. FOLDER HEADER ────────────────────────────────────── */}
+        <div className="flex items-center justify-between mb-6 pb-3.5 border-b border-wood-700/60">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-5 h-5 text-wood-amber stroke-[2.5]" />
+            <h1 className="font-alexandria font-black text-lg sm:text-2xl text-wood-cream">
+              {folder.name}
+            </h1>
+          </div>
+          <span className="px-3 py-1 rounded-xl bg-wood-850 border border-wood-700 text-xs font-black text-wood-gold">
+            {projects.length} {projects.length === 1 ? 'عمل' : 'أعمال'}
+          </span>
+        </div>
 
         {/* ── 3. PROJECTS GALLERY ──────────────────────────────────── */}
-        <section ref={galleryRef} className="pt-2">
-          
-          {/* Active subcategory header */}
-          <div className="flex items-center justify-between mb-5 pb-3 border-b border-wood-700/60">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-wood-amber stroke-[2.5]" />
-              <h2 className="font-alexandria font-black text-sm sm:text-base text-wood-cream">
-                {folder.subcategories?.find(s => s.id === selectedSubcategory)?.name || folder.name}
-              </h2>
-            </div>
-          </div>
-
+        <section>
           {projects.length === 0 ? (
             <div className="text-center py-16 glass-card rounded-3xl p-8 border border-wood-700/50">
               <Folder className="w-10 h-10 text-wood-muted/40 mx-auto mb-2" />
@@ -199,5 +142,3 @@ export default function FolderDetailsPage() {
     </div>
   );
 }
-
-
