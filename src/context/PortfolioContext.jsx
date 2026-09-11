@@ -25,15 +25,16 @@ export const PortfolioProvider = ({ children }) => {
   useEffect(() => {
     try {
       localStorage.removeItem('wood_cached_projects');
+      localStorage.removeItem('wood_cached_folders');
     } catch(e) {}
   }, []);
 
   const [folders, setFolders] = useState(() => {
     try {
-      const cached = localStorage.getItem('wood_cached_folders');
-      return cached ? JSON.parse(cached) : CRAFTSMAN_CONFIG.defaultFolders;
+      const cached = localStorage.getItem('wood_folders_v2');
+      return cached ? JSON.parse(cached) : [];
     } catch {
-      return CRAFTSMAN_CONFIG.defaultFolders;
+      return [];
     }
   });
 
@@ -59,11 +60,9 @@ export const PortfolioProvider = ({ children }) => {
     try {
       // Folders listener
       unsubFolders = onSnapshot(collection(db, "folders"), (snap) => {
-        if (!snap.empty) {
-          const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          setFolders(list);
-          try { localStorage.setItem('wood_cached_folders', JSON.stringify(list)); } catch(e){}
-        }
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setFolders(list);
+        try { localStorage.setItem('wood_folders_v2', JSON.stringify(list)); } catch(e){}
       }, (err) => {
         console.warn("Folders snapshot error:", err.message);
       });
@@ -208,7 +207,7 @@ export const PortfolioProvider = ({ children }) => {
     setFolders(prev => {
       const exists = prev.some(f => f.id === id);
       const next = exists ? prev.map(f => f.id === id ? { ...f, ...updatedFolder } : f) : [...prev, updatedFolder];
-      try { localStorage.setItem('wood_cached_folders', JSON.stringify(next)); } catch(e){}
+      try { localStorage.setItem('wood_folders_v2', JSON.stringify(next)); } catch(e){}
       return next;
     });
 
@@ -228,7 +227,7 @@ export const PortfolioProvider = ({ children }) => {
   const deleteFolder = async (folderId) => {
     const remaining = folders.filter(f => f.id !== folderId);
     setFolders(remaining);
-    try { localStorage.setItem('wood_cached_folders', JSON.stringify(remaining)); } catch(e){}
+    try { localStorage.setItem('wood_folders_v2', JSON.stringify(remaining)); } catch(e){}
 
     try {
       await deleteDoc(doc(db, "folders", folderId));
