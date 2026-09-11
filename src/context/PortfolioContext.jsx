@@ -21,6 +21,13 @@ export const usePortfolio = () => {
 };
 
 export const PortfolioProvider = ({ children }) => {
+  // Purge any old legacy mock cache from browser
+  useEffect(() => {
+    try {
+      localStorage.removeItem('wood_cached_projects');
+    } catch(e) {}
+  }, []);
+
   const [folders, setFolders] = useState(() => {
     try {
       const cached = localStorage.getItem('wood_cached_folders');
@@ -32,14 +39,8 @@ export const PortfolioProvider = ({ children }) => {
 
   const [projects, setProjects] = useState(() => {
     try {
-      const cached = localStorage.getItem('wood_cached_projects');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        // Clean out any legacy mock sample projects
-        const cleaned = parsed.filter(p => !p.id?.startsWith('proj_bed_') && !p.id?.startsWith('proj_din_') && !p.id?.startsWith('proj_door_') && !p.id?.startsWith('proj_kit_') && !p.id?.startsWith('proj_sal_'));
-        return cleaned;
-      }
-      return [];
+      const cached = localStorage.getItem('wood_projects_v2');
+      return cached ? JSON.parse(cached) : [];
     } catch {
       return [];
     }
@@ -71,7 +72,7 @@ export const PortfolioProvider = ({ children }) => {
       unsubProjects = onSnapshot(collection(db, "projects"), (snap) => {
         const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setProjects(list);
-        try { localStorage.setItem('wood_cached_projects', JSON.stringify(list)); } catch(e){}
+        try { localStorage.setItem('wood_projects_v2', JSON.stringify(list)); } catch(e){}
         setLoading(false);
       }, (err) => {
         console.warn("Projects snapshot error:", err.message);
@@ -148,14 +149,14 @@ export const PortfolioProvider = ({ children }) => {
     if (projectId) {
       setProjects(prev => {
         const next = prev.map(p => p.id === projectId ? { ...p, ...finalProjectData } : p);
-        try { localStorage.setItem('wood_cached_projects', JSON.stringify(next)); } catch(e){}
+        try { localStorage.setItem('wood_projects_v2', JSON.stringify(next)); } catch(e){}
         return next;
       });
     } else {
       const tempId = `proj_${Date.now()}`;
       setProjects(prev => {
         const next = [{ id: tempId, ...finalProjectData, createdAt: new Date().toISOString() }, ...prev];
-        try { localStorage.setItem('wood_cached_projects', JSON.stringify(next)); } catch(e){}
+        try { localStorage.setItem('wood_projects_v2', JSON.stringify(next)); } catch(e){}
         return next;
       });
     }
@@ -187,7 +188,7 @@ export const PortfolioProvider = ({ children }) => {
   const deleteProject = async (projectId) => {
     const remaining = projects.filter(p => p.id !== projectId);
     setProjects(remaining);
-    try { localStorage.setItem('wood_cached_projects', JSON.stringify(remaining)); } catch(e){}
+    try { localStorage.setItem('wood_projects_v2', JSON.stringify(remaining)); } catch(e){}
 
     try {
       await deleteDoc(doc(db, "projects", projectId));
