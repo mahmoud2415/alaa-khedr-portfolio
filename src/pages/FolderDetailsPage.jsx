@@ -125,7 +125,7 @@ export default function FolderDetailsPage() {
         {/* ── 2. RECTANGULAR SUB-CATEGORY CARDS GRID (مربعات / مستطيلات الأقسام فقط بدون بطاقة الكل) ── */}
         {folder.subcategories && folder.subcategories.length > 0 && (
           <section className="mb-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3.5 md:gap-4">
               {folder.subcategories.map((sub) => {
                 const cleanName = getCleanSubcategoryName(sub.name);
                 const isSelected = selectedSubcategory === sub.id;
@@ -134,16 +134,16 @@ export default function FolderDetailsPage() {
                   <button
                     key={sub.id}
                     onClick={() => handleSelectSubcategory(sub.id)}
-                    className={`p-4 sm:p-5 rounded-2xl flex items-center justify-between text-right transition-all duration-300 transform active:scale-95 shadow-md ${
+                    className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-between text-right transition-all duration-300 transform active:scale-95 shadow-md ${
                       isSelected
                         ? 'bg-wood-amber text-white border-2 border-wood-amber shadow-wood-amber/30 ring-2 ring-wood-amber/40 scale-[1.02]'
                         : 'bg-wood-850/90 hover:bg-wood-800 text-wood-cream border border-wood-700/80 hover:border-wood-amber/50'
                     }`}
                   >
-                    <h3 className="font-alexandria font-black text-sm sm:text-base leading-snug">
+                    <h3 className="font-alexandria font-black text-[11px] sm:text-sm md:text-base leading-snug line-clamp-2">
                       {cleanName}
                     </h3>
-                    <ArrowLeft className={`w-4 h-4 stroke-[2.5] shrink-0 mr-2 ${
+                    <ArrowLeft className={`w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5] shrink-0 mr-1 sm:mr-2 ${
                       isSelected ? 'text-white -translate-x-1' : 'text-wood-muted'
                     }`} />
                   </button>
