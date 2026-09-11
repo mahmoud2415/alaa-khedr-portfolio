@@ -20,119 +20,6 @@ export const usePortfolio = () => {
   return context;
 };
 
-// Initial Sample Projects for instant gorgeous display
-const INITIAL_SAMPLE_PROJECTS = [
-  {
-    id: "proj_bed_101",
-    code: "BED-101",
-    title: "غرفة نوم ماستر مودرن — تشطيب دوكو فرن مط",
-    desc: "تشطيب كامل لغرفة نوم رئيسية بدهان دوكو فرن إيطالي عالي المقاومة، معالجة فواصل الخشب، ملمس حريري مطفي فخم غير عاكس للبصمات.",
-    folderId: "bedrooms",
-    subcategoryId: "bedrooms_duco",
-    woodType: "خشب زان أحمر روماني + قشرة أرو",
-    paintType: "دوكو فرن إيطالي مطفي (Silky Matt)",
-    color: "رمادي كشميري دافئ (Warm Greige)",
-    duration: "10 أيام عمل",
-    isFeatured: true,
-    images: [
-      "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1540518614846-7ede433c4ef0?auto=format&fit=crop&w=1200&q=80"
-    ],
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "proj_bed_102",
-    code: "BED-102",
-    title: "غرفة نوم كلاسيك — إستر وتعتيق باتينا ملكي",
-    desc: "دهان وتشطيب إستر شفاف عالي اللمعان مع إبراز عروق القشرة الطبيعية، وتعتيق الحليات والأويمة ببودرة ذهبية وباتينا فرنسية فخمة.",
-    folderId: "bedrooms",
-    subcategoryId: "bedrooms_ester",
-    woodType: "خشب زان مجفف + قشرة جوز تركي",
-    paintType: "إستر بوليستر كريستال ولميع",
-    color: "بني عسلي غامق وتعتيق ذهبي",
-    duration: "14 يوم عمل",
-    isFeatured: true,
-    images: [
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
-    ],
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "proj_din_201",
-    code: "DIN-201",
-    title: "سفرة وبوفيه مودرن — دوكو أوف وايت وميتاليك",
-    desc: "تشطيب طاولة سفرة و8 كراسي وبوفيه بدهان دوكو بولي يوريثان مقاوم للحرارة والخدش مع لمسات ميتاليك شامبين في القوائم.",
-    folderId: "dining_rooms",
-    subcategoryId: "dining_duco",
-    woodType: "خشب زان أحمر",
-    paintType: "دوكو بولي يوريثان مقاوم للسوائل",
-    color: "أوف وايت ناعم + شامبين جولد",
-    duration: "12 يوم عمل",
-    isFeatured: true,
-    images: [
-      "https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=1200&q=80"
-    ],
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "proj_door_301",
-    code: "DOOR-301",
-    title: "أبواب شقق وفيلات — عازل دوكو كابينة فرن",
-    desc: "تشطيب أبواب غرف وشقق كابينة فرن بضغط حراري، طبقات أساس عازلة ضد الرطوبة وتغيرات الجو مع لمعان زجاجي فائق.",
-    folderId: "doors_windows",
-    subcategoryId: "doors_duco",
-    woodType: "خشب موسكي روسي مع كبس قشرة أرو",
-    paintType: "دوكو كابينة فرن ضد الرطوبة",
-    color: "رمادي أنثراسيت مودرن (Anthracite)",
-    duration: "7 أيام عمل",
-    isFeatured: true,
-    images: [
-      "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=1200&q=80"
-    ],
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "proj_kit_401",
-    code: "KIT-401",
-    title: "مطبخ خشب أرو طبيعي — تشطيب مائي صديق للبيئة",
-    desc: "دهان وحدات مطبخ كاملة بمواد دهان ألمانية مائية مقاومة للبخار والزيوت مع إبراز مسام وعروق خشب الأرو الطبيعي.",
-    folderId: "kitchens_dressing",
-    subcategoryId: "kitchens_wood",
-    woodType: "خشب أرو ماسيف طبيعي",
-    paintType: "ورنيش مائي ألماني عالي التحمل",
-    color: "خشب طبيعي هادئ (Natural Oak)",
-    duration: "10 أيام عمل",
-    isFeatured: false,
-    images: [
-      "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1200&q=80"
-    ],
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "proj_sal_501",
-    code: "SAL-501",
-    title: "صالون كلاسيك ملكي — تجديد وورق ذهب إيطالي",
-    desc: "إعادة تأهيل ودهان صالون قديم بالكامل، صيانة الأخشاب، تذهيب الأويمة بورق ذهب إيطالي عيار 24 مع ورنيش حماية شفاف.",
-    folderId: "living_salons",
-    subcategoryId: "salons_gold",
-    woodType: "خشب زان أصلي قديم",
-    paintType: "تذهيب ورق دهب إيطالي وباتينا",
-    color: "ذهب ملكي عتيق",
-    duration: "15 يوم عمل",
-    isFeatured: true,
-    images: [
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1200&q=80"
-    ],
-    createdAt: new Date().toISOString()
-  }
-];
-
 export const PortfolioProvider = ({ children }) => {
   const [folders, setFolders] = useState(() => {
     try {
@@ -146,9 +33,15 @@ export const PortfolioProvider = ({ children }) => {
   const [projects, setProjects] = useState(() => {
     try {
       const cached = localStorage.getItem('wood_cached_projects');
-      return cached ? JSON.parse(cached) : INITIAL_SAMPLE_PROJECTS;
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        // Clean out any legacy mock sample projects
+        const cleaned = parsed.filter(p => !p.id?.startsWith('proj_bed_') && !p.id?.startsWith('proj_din_') && !p.id?.startsWith('proj_door_') && !p.id?.startsWith('proj_kit_') && !p.id?.startsWith('proj_sal_'));
+        return cleaned;
+      }
+      return [];
     } catch {
-      return INITIAL_SAMPLE_PROJECTS;
+      return [];
     }
   });
 
@@ -176,11 +69,9 @@ export const PortfolioProvider = ({ children }) => {
 
       // Projects listener
       unsubProjects = onSnapshot(collection(db, "projects"), (snap) => {
-        if (!snap.empty) {
-          const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          setProjects(list);
-          try { localStorage.setItem('wood_cached_projects', JSON.stringify(list)); } catch(e){}
-        }
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setProjects(list);
+        try { localStorage.setItem('wood_cached_projects', JSON.stringify(list)); } catch(e){}
         setLoading(false);
       }, (err) => {
         console.warn("Projects snapshot error:", err.message);
