@@ -241,27 +241,17 @@ export default function ProjectDetailsPage() {
 
             </div>
 
-            {/* Primary Action Buttons (WhatsApp & Call) */}
-            <div className="space-y-3 pt-2">
-              
+            {/* Primary Action Button (WhatsApp) */}
+            <div className="pt-2">
               <a
                 href={waUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-2xl bg-wood-amber hover:bg-wood-gold active:bg-amber-600 text-white font-bold text-sm shadow-xl shadow-wood-amber/25 transition-all active:scale-95"
+                className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl bg-wood-amber hover:bg-wood-gold active:bg-amber-600 text-white font-black text-sm sm:text-base shadow-xl shadow-wood-amber/25 transition-all active:scale-95"
               >
                 <MessageCircle className="w-5 h-5 fill-white" />
-                <span>استفسر عن سعر وتفاصيل هذا الشغل عبر واتساب</span>
+                <span>واتساب</span>
               </a>
-
-              <a
-                href={`tel:${craftsmanInfo.phone}`}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-wood-850 hover:bg-wood-800 text-wood-cream border border-wood-700 font-bold text-xs transition-colors"
-              >
-                <Phone className="w-4 h-4 text-wood-amber" />
-                <span>اتصال مباشر: {craftsmanInfo.phoneDisplay}</span>
-              </a>
-
             </div>
 
           </div>

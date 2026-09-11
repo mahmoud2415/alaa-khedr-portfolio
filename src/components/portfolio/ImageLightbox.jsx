@@ -117,10 +117,10 @@ export default function ImageLightbox({ images = [], initialIndex = 0, projectTi
           href={waUrl}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-wood-amber hover:bg-wood-gold active:bg-amber-600 text-white font-bold text-sm shadow-xl shadow-wood-amber/30 active:scale-95 transition-all"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-wood-amber hover:bg-wood-gold active:bg-amber-600 text-white font-black text-sm shadow-xl shadow-wood-amber/30 active:scale-95 transition-all"
         >
           <MessageCircle className="w-4 h-4 fill-white" />
-          <span>استفسر عن هذا الشغل</span>
+          <span>واتساب</span>
         </a>
 
         {/* Thumbnails Strip if multiple */}
