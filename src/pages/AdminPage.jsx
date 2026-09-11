@@ -132,7 +132,7 @@ export default function AdminPage() {
     code: "",
     desc: "",
     folderId: "",
-    paintType: "دوكو فرن مط",
+    paintType: "",
     woodType: "خشب زان أحمر",
     color: "",
     duration: "10 أيام",
@@ -255,7 +255,7 @@ export default function AdminPage() {
       code: `WOOD-${Math.floor(100 + Math.random() * 900)}`,
       desc: "",
       folderId: defaultFolder,
-      paintType: "دوكو فرن إيطالي",
+      paintType: "",
       woodType: "خشب زان أحمر",
       color: "أوف وايت ناعم",
       duration: "10 أيام",
@@ -345,7 +345,7 @@ export default function AdminPage() {
       code: projectForm.code.trim().toUpperCase() || `WOOD-${Math.floor(100 + Math.random() * 900)}`,
       desc: projectForm.desc.trim(),
       folderId: projectForm.folderId || folders[0]?.id || "bedrooms",
-      paintType: projectForm.paintType.trim() || "دوكو فرن مط",
+      paintType: projectForm.paintType.trim() || "",
       woodType: projectForm.woodType.trim() || "خشب زان أحمر",
       color: projectForm.color.trim() || "",
       duration: projectForm.duration.trim() || "",
@@ -863,7 +863,7 @@ export default function AdminPage() {
                   type="text"
                   value={projectForm.title}
                   onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
-                  placeholder="مثال: غرفة نوم ماستر دوكو فرن مط"
+                  placeholder="مثال: غرفة نوم ماستر كلاسيك"
                   className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-bold outline-none focus:border-wood-amber"
                 />
               </div>
@@ -890,7 +890,7 @@ export default function AdminPage() {
                     type="text"
                     value={projectForm.paintType}
                     onChange={(e) => setProjectForm({ ...projectForm, paintType: e.target.value })}
-                    placeholder="دوكو فرن مط / إستر وبوليستر"
+                    placeholder="مثال: إستر / قشرة أرو / لاكيه"
                     className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3 py-2 text-wood-cream font-bold outline-none focus:border-wood-amber"
                   />
                 </div>
