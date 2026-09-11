@@ -35,7 +35,9 @@ import {
   Settings,
   Mail,
   KeyRound,
-  LogOut
+  LogOut,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 
 // Helper: Compress image to optimized JPEG Data URL via HTML5 Canvas (Fail-safe for Mobile & Large Photos)
@@ -102,7 +104,8 @@ export default function AdminPage() {
     saveProject, 
     deleteProject, 
     saveFolder, 
-    deleteFolder 
+    deleteFolder,
+    moveFolder 
   } = usePortfolio();
 
   // ── Authentication State (Firebase Auth) ────────────────
@@ -794,35 +797,67 @@ export default function AdminPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {folders.map((fld) => (
+            {folders.map((fld, index) => (
               <div key={fld.id} className="glass-card rounded-2xl border border-wood-700/70 p-5 space-y-4 bg-wood-850/90 shadow-lg">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <img 
-                      src={fld.image || "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80"} 
-                      alt={fld.name}
-                      className="w-16 h-16 rounded-2xl object-cover border border-wood-700 shrink-0 shadow-md"
-                    />
+                    <div className="relative">
+                      <img 
+                        src={fld.image || "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80"} 
+                        alt={fld.name}
+                        className="w-16 h-16 rounded-2xl object-cover border border-wood-700 shrink-0 shadow-md"
+                      />
+                      <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-wood-amber text-white text-[11px] font-black flex items-center justify-center shadow-md">
+                        {index + 1}
+                      </span>
+                    </div>
                     <div>
                       <h3 className="font-alexandria font-black text-base text-wood-cream">{fld.name}</h3>
+                      <span className="text-[11px] text-wood-muted font-bold block mt-0.5">
+                        ترتيب الظهور: #{index + 1}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    {/* Reorder Up / Down Buttons */}
+                    <div className="flex items-center bg-wood-900 border border-wood-700/80 rounded-xl p-1 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => moveFolder(fld.id, 'up')}
+                        disabled={index === 0}
+                        className="p-1.5 rounded-lg text-wood-cream hover:text-wood-amber hover:bg-wood-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-wood-cream transition-all active:scale-95"
+                        title="تحريك للأعلى / لليمين"
+                      >
+                        <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveFolder(fld.id, 'down')}
+                        disabled={index === folders.length - 1}
+                        className="p-1.5 rounded-lg text-wood-cream hover:text-wood-amber hover:bg-wood-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-wood-cream transition-all active:scale-95"
+                        title="تحريك للأسفل / لليسار"
+                      >
+                        <ArrowDown className="w-4 h-4 stroke-[2.5]" />
+                      </button>
+                    </div>
+
                     <button
+                      type="button"
                       onClick={() => openEditFolder(fld)}
-                      className="p-2.5 rounded-xl bg-wood-800 hover:bg-wood-700 text-wood-amber border border-wood-700 transition-all"
+                      className="p-2.5 rounded-xl bg-wood-800 hover:bg-wood-700 text-wood-amber border border-wood-700 transition-all active:scale-95"
                       title="تعديل القسم"
                     >
                       <Edit3 className="w-4 h-4 stroke-[2.5]" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => {
                         if (confirm(`هل أنت متأكد من حذف قسم "${fld.name}"؟`)) {
                           deleteFolder(fld.id);
                         }
                       }}
-                      className="p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition-all"
+                      className="p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition-all active:scale-95"
                       title="حذف"
                     >
                       <Trash2 className="w-4 h-4 stroke-[2.5]" />

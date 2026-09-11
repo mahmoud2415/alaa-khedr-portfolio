@@ -29,10 +29,19 @@ export const PortfolioProvider = ({ children }) => {
     } catch(e) {}
   }, []);
 
+  const sortFolders = (list) => {
+    return [...list].sort((a, b) => {
+      const orderA = typeof a.order === 'number' ? a.order : 9999;
+      const orderB = typeof b.order === 'number' ? b.order : 9999;
+      if (orderA !== orderB) return orderA - orderB;
+      return (a.createdAt || '').localeCompare(b.createdAt || '');
+    });
+  };
+
   const [folders, setFolders] = useState(() => {
     try {
       const cached = localStorage.getItem('wood_folders_v2');
-      return cached ? JSON.parse(cached) : [];
+      return cached ? sortFolders(JSON.parse(cached)) : [];
     } catch {
       return [];
     }
@@ -72,8 +81,9 @@ export const PortfolioProvider = ({ children }) => {
       // Folders listener
       unsubFolders = onSnapshot(collection(db, "folders"), (snap) => {
         const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setFolders(list);
-        try { localStorage.setItem('wood_folders_v2', JSON.stringify(list)); } catch(e){}
+        const sorted = sortFolders(list);
+        setFolders(sorted);
+        try { localStorage.setItem('wood_folders_v2', JSON.stringify(sorted)); } catch(e){}
       }, (err) => {
         console.warn("Folders snapshot error:", err.message);
       });
@@ -214,19 +224,31 @@ export const PortfolioProvider = ({ children }) => {
   // Add / Edit Folder
   const saveFolder = async (folderData, folderId = null) => {
     const id = folderId || folderData.id || folderData.name.trim().toLowerCase().replace(/\s+/g, '_');
-    const updatedFolder = { ...folderData, id, updatedAt: new Date().toISOString() };
+    const existingFolder = folders.find(f => f.id === id);
+    const order = typeof folderData.order === 'number' 
+      ? folderData.order 
+      : (existingFolder?.order ?? folders.length);
+
+    const updatedFolder = { 
+      ...folderData, 
+      id, 
+      order,
+      updatedAt: new Date().toISOString() 
+    };
     
     setFolders(prev => {
       const exists = prev.some(f => f.id === id);
       const next = exists ? prev.map(f => f.id === id ? { ...f, ...updatedFolder } : f) : [...prev, updatedFolder];
-      try { localStorage.setItem('wood_folders_v2', JSON.stringify(next)); } catch(e){}
-      return next;
+      const sorted = sortFolders(next);
+      try { localStorage.setItem('wood_folders_v2', JSON.stringify(sorted)); } catch(e){}
+      return sorted;
     });
 
     try {
       await setDoc(doc(db, "folders", id), {
         ...folderData,
         id,
+        order,
         updatedAt: serverTimestamp()
       }, { merge: true });
       return { success: true };
@@ -251,6 +273,42 @@ export const PortfolioProvider = ({ children }) => {
     }
   };
 
+  const reorderFolders = async (orderedList) => {
+    const updatedList = orderedList.map((folder, index) => ({
+      ...folder,
+      order: index
+    }));
+    setFolders(updatedList);
+    try { localStorage.setItem('wood_folders_v2', JSON.stringify(updatedList)); } catch(e){}
+
+    try {
+      await Promise.all(
+        updatedList.map(folder => 
+          setDoc(doc(db, "folders", folder.id), { order: folder.order }, { merge: true })
+        )
+      );
+      return { success: true };
+    } catch (err) {
+      console.warn("Reorder firestore sync warning:", err.message);
+      return { success: true, localOnly: true };
+    }
+  };
+
+  const moveFolder = async (folderId, direction) => {
+    const index = folders.findIndex(f => f.id === folderId);
+    if (index === -1) return;
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === folders.length - 1) return;
+
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    const next = [...folders];
+    const temp = next[index];
+    next[index] = next[targetIndex];
+    next[targetIndex] = temp;
+
+    return reorderFolders(next);
+  };
+
   return (
     <PortfolioContext.Provider value={{
       folders,
@@ -267,6 +325,8 @@ export const PortfolioProvider = ({ children }) => {
       deleteProject,
       saveFolder,
       deleteFolder,
+      reorderFolders,
+      moveFolder,
       setCraftsmanInfo
     }}>
       {children}
