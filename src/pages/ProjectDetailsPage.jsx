@@ -33,7 +33,7 @@ export default function ProjectDetailsPage() {
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <Tag className="w-12 h-12 text-wood-muted/40 mb-3" />
         <h2 className="font-alexandria font-bold text-lg text-wood-cream">العمل المطلوب غير موجود</h2>
-        <p className="text-xs text-wood-muted mt-1">تأكد من كود الشغل أو تصفح المعرض</p>
+        <p className="text-xs text-wood-muted mt-1">تصفح المعرض لمشاهدة كافة الأعمال</p>
         <Link to="/" className="mt-4 px-4 py-2 rounded-xl bg-wood-amber text-white text-xs font-bold">
           العودة للرئيسية
         </Link>
@@ -60,7 +60,7 @@ export default function ProjectDetailsPage() {
       try {
         await navigator.share({
           title: project.title,
-          text: `شاهد تشطيب ${project.title} - ورشة علاء خضر (كود #${project.code})`,
+          text: `شاهد تشطيب ${project.title} - ورشة علاء خضر`,
           url: window.location.href
         });
       } catch (e) {}
@@ -88,7 +88,7 @@ export default function ProjectDetailsPage() {
               </>
             )}
             <span className="text-wood-cream font-bold line-clamp-1">
-              #{project.code || project.id}
+              {project.title}
             </span>
           </nav>
 
@@ -116,12 +116,6 @@ export default function ProjectDetailsPage() {
                 onClick={() => setLightboxOpen(true)}
                 className="w-full h-full object-cover cursor-pointer group-hover:scale-105 transition-transform duration-500"
               />
-
-              {/* Code Badge */}
-              <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-wood-amber text-white font-alexandria font-black text-sm shadow-xl shadow-wood-amber/30">
-                <Tag className="w-4 h-4" />
-                <span>#{project.code || project.id}</span>
-              </div>
 
               {/* Zoom Trigger Button */}
               <button
@@ -178,14 +172,6 @@ export default function ProjectDetailsPage() {
               <h1 className="text-xl sm:text-2xl font-black font-alexandria text-wood-cream leading-snug">
                 {project.title}
               </h1>
-
-              {/* Code Bar */}
-              <div className="mt-3 inline-flex items-center gap-2 p-2 px-3 rounded-xl bg-wood-850 border border-wood-700 text-xs">
-                <span className="text-wood-muted">كود العمل:</span>
-                <strong className="text-wood-gold font-alexandria font-bold text-sm tracking-wide">
-                  #{project.code || project.id}
-                </strong>
-              </div>
             </div>
 
             {/* Description */}

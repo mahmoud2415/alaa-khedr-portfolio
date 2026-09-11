@@ -734,9 +734,6 @@ export default function AdminPage() {
                       alt={proj.title}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-wood-amber text-white font-black text-xs shadow-md">
-                      #{proj.code || proj.id}
-                    </div>
                     {proj.images?.length > 1 && (
                       <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/80 text-[10px] text-white backdrop-blur-sm font-black">
                         {proj.images.length} صور
@@ -892,28 +889,15 @@ export default function AdminPage() {
                 </div>
               )}
               
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-2">
-                  <label className="block text-wood-muted font-black mb-1">اسم العمل / الموديل *</label>
-                  <input
-                    type="text"
-                    value={projectForm.title}
-                    onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
-                    placeholder="مثال: غرفة نوم ماستر دوكو فرن مط"
-                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-bold outline-none focus:border-wood-amber"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-wood-muted font-black mb-1">كود العمل (تلقائي)</label>
-                  <input
-                    type="text"
-                    value={projectForm.code}
-                    onChange={(e) => setProjectForm({ ...projectForm, code: e.target.value })}
-                    placeholder="BED-101"
-                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-gold font-black outline-none focus:border-wood-amber text-center"
-                  />
-                </div>
+              <div>
+                <label className="block text-wood-muted font-black mb-1">اسم العمل / الموديل *</label>
+                <input
+                  type="text"
+                  value={projectForm.title}
+                  onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
+                  placeholder="مثال: غرفة نوم ماستر دوكو فرن مط"
+                  className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-bold outline-none focus:border-wood-amber"
+                />
               </div>
 
               {/* Folder and Subcategory selection */}
