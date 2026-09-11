@@ -40,9 +40,11 @@ export default function Footer() {
                 </p>
               </div>
             </div>
-            <p className="text-xs leading-relaxed text-wood-muted/90">
-              {craftsmanInfo.bio}
-            </p>
+            {craftsmanInfo.bio && (
+              <p className="text-xs leading-relaxed text-wood-muted/90">
+                {craftsmanInfo.bio}
+              </p>
+            )}
           </div>
 
           {/* Col 2: Direct Contact Details */}

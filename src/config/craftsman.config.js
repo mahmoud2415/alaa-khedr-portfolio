@@ -5,13 +5,13 @@
  */
 
 export const CRAFTSMAN_CONFIG = {
-  name: "ورشة علاء خضر للدهانات",
-  brandName: "ورشة علاء خضر للدهانات",
-  title: "ورشة متخصصة في الدهانات",
+  name: "علاء خضر",
+  brandName: "علاء خضر",
+  title: "لدهانات الموبيليا",
   slogan: "إبداع وتميز في فن الدهانات المودرن والكلاسيك",
-  bio: "ورشة علاء خضر للدهانات بمدينة فاقوس",
+  bio: "",
   
-  avatar: "https://bluetags.online/uploads/vcards/profiles/8645/IMG_IMG_1515792932416_1.jpg",
+  avatar: "/assets/profile.jpeg",
   coverImage: "https://bluetags.online/uploads/vcards/covers/8646/LogoMaker_٢٤٠٩٢٠٢١_١٣٣٦٥٧.png",
 
   // ── أرقام التواصل والعناوين ───────────────────────────────
