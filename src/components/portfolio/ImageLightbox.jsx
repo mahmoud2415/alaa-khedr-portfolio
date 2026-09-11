@@ -46,8 +46,9 @@ export default function ImageLightbox({ images = [], initialIndex = 0, projectTi
 
   if (!isOpen || images.length === 0) return null;
 
-  // WhatsApp Inquiry URL - Only the work link
-  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(window.location.href)}`;
+  const currentImg = images[currentIndex] || images[0] || "";
+  const waMessage = `${projectTitle || 'عمل من المعرض'}\n${window.location.href}`;
+  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waMessage)}`;
 
   return (
     <div 

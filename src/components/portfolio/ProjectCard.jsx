@@ -29,9 +29,10 @@ export default function ProjectCard({ project, onOpenLightbox }) {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  // WhatsApp Inquiry URL - Only the direct work URL
+  // WhatsApp Inquiry URL - Project Title then direct work URL
   const projectUrl = `${window.location.origin}/project/${project.id}`;
-  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(projectUrl)}`;
+  const waMessage = `${project.title || 'عمل من المعرض'}\n${projectUrl}`;
+  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waMessage)}`;
 
   return (
     <div 

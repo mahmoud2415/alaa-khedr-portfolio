@@ -50,8 +50,9 @@ export default function ProjectDetailsPage() {
     ? project.images 
     : ["https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80"];
 
-  // WhatsApp Inquiry URL - Only the work link
-  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(window.location.href)}`;
+  // WhatsApp Inquiry URL - Project title then direct work link
+  const waMessage = `${project.title}\n${window.location.href}`;
+  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waMessage)}`;
 
   // Share
   const handleShare = async () => {
@@ -288,6 +289,7 @@ export default function ProjectDetailsPage() {
         isOpen={lightboxOpen}
         images={images}
         initialIndex={selectedImageIndex}
+        projectTitle={project.title}
         onClose={() => setLightboxOpen(false)}
       />
 
