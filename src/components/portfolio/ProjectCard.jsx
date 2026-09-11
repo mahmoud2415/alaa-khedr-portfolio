@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { MessageCircle, Eye, ChevronLeft, ChevronRight, Share2, Check } from 'lucide-react';
+import { MessageCircle, Eye, ChevronLeft, ChevronRight, Share2, Check, ArrowLeft } from 'lucide-react';
 
 export default function ProjectCard({ project, onOpenLightbox }) {
   const { craftsmanInfo } = usePortfolio();
@@ -130,25 +131,37 @@ export default function ProjectCard({ project, onOpenLightbox }) {
           {project.title}
         </h3>
 
-        {/* Inline Finish Badge & Compact WhatsApp Link */}
-        <div className="flex items-center justify-between gap-2 pt-1">
+        {/* Inline Finish Badge & Action Buttons */}
+        <div className="flex items-center justify-between gap-2 pt-1 border-t border-wood-700/40 mt-1">
           {project.paintType ? (
-            <span className="inline-block px-2.5 py-1 rounded-xl bg-wood-800 text-[11px] text-wood-amber font-black border border-wood-700/60">
+            <span className="inline-block px-2.5 py-1 rounded-xl bg-wood-800 text-[11px] text-wood-amber font-black border border-wood-700/60 truncate max-w-[130px]">
               ✨ {project.paintType}
             </span>
           ) : <span />}
 
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-wood-800 hover:bg-wood-amber text-wood-muted hover:text-white font-black text-xs border border-wood-700/70 shadow-sm transition-all active:scale-95 shrink-0"
-            title="استفسار عبر واتساب"
-          >
-            <MessageCircle className="w-3.5 h-3.5 text-wood-amber stroke-[2.5]" />
-            <span>واتساب</span>
-          </a>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Link
+              to={`/project/${project.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-wood-800 hover:bg-wood-750 text-wood-cream hover:text-wood-amber text-[11px] font-black border border-wood-700/70 transition-all active:scale-95"
+              title="صفحة تفاصيل الشغل"
+            >
+              <span>التفاصيل</span>
+              <ArrowLeft className="w-3 h-3 stroke-[2.5]" />
+            </Link>
+
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-black text-[11px] shadow-sm shadow-wood-amber/20 transition-all active:scale-95"
+              title="استفسار عبر واتساب"
+            >
+              <MessageCircle className="w-3.5 h-3.5 fill-white" />
+              <span>واتساب</span>
+            </a>
+          </div>
         </div>
       </div>
 
