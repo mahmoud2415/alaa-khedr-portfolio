@@ -125,7 +125,7 @@ export default function FolderDetailsPage() {
         {/* ── 2. RECTANGULAR SUB-CATEGORY CARDS GRID (مربعات / مستطيلات الأقسام فقط بدون بطاقة الكل) ── */}
         {folder.subcategories && folder.subcategories.length > 0 && (
           <section className="mb-8">
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               {folder.subcategories.map((sub) => {
                 const cleanName = getCleanSubcategoryName(sub.name);
                 const isSelected = selectedSubcategory === sub.id;
