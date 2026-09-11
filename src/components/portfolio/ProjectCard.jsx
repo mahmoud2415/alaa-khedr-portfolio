@@ -29,17 +29,9 @@ export default function ProjectCard({ project, onOpenLightbox }) {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  // WhatsApp Inquiry URL
-  const waLines = [
-    `السلام عليكم أ / علاء خضر`,
-    `حبيت استفسر عن تفاصيل وسعر هذا العمل:`,
-    `▪️ الموديل: ${project.title || 'عمل من المعرض'}`,
-    project.code ? `▪️ كود العمل: #${project.code}` : '',
-    project.paintType ? `▪️ نوع الدهان: ${project.paintType}` : '',
-    `▪️ رابط المعرض: ${window.location.origin}/folder/${project.folderId || ''}`
-  ].filter(Boolean).join('\n');
-
-  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(waLines)}`;
+  // WhatsApp Inquiry URL - Only the direct work URL
+  const projectUrl = `${window.location.origin}/project/${project.id}`;
+  const waUrl = `https://wa.me/${craftsmanInfo.whatsappNumber}?text=${encodeURIComponent(projectUrl)}`;
 
   return (
     <div 
