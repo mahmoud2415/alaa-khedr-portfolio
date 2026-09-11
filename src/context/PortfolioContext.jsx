@@ -38,10 +38,21 @@ export const PortfolioProvider = ({ children }) => {
     }
   });
 
+  const cleanProjectData = (p) => {
+    let pt = p.paintType || "";
+    if (pt.includes("دوكو فرن")) {
+      pt = pt.replace(/دوكو فرن\s*(إيطالي|مط)?/g, "").trim();
+    }
+    return {
+      ...p,
+      paintType: pt
+    };
+  };
+
   const [projects, setProjects] = useState(() => {
     try {
       const cached = localStorage.getItem('wood_projects_v2');
-      return cached ? JSON.parse(cached) : [];
+      return cached ? JSON.parse(cached).map(cleanProjectData) : [];
     } catch {
       return [];
     }
@@ -69,7 +80,7 @@ export const PortfolioProvider = ({ children }) => {
 
       // Projects listener
       unsubProjects = onSnapshot(collection(db, "projects"), (snap) => {
-        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const list = snap.docs.map(d => cleanProjectData({ id: d.id, ...d.data() }));
         setProjects(list);
         try { localStorage.setItem('wood_projects_v2', JSON.stringify(list)); } catch(e){}
         setLoading(false);
@@ -138,8 +149,9 @@ export const PortfolioProvider = ({ children }) => {
   // Add / Edit Project
   const saveProject = async (projectData, projectId = null) => {
     const defaultCode = projectData.code?.trim().toUpperCase() || `WOOD-${Math.floor(100 + Math.random() * 900)}`;
+    const cleaned = cleanProjectData(projectData);
     const finalProjectData = {
-      ...projectData,
+      ...cleaned,
       code: defaultCode,
       updatedAt: new Date().toISOString()
     };

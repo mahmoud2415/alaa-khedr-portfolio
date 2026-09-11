@@ -256,9 +256,9 @@ export default function AdminPage() {
       desc: "",
       folderId: defaultFolder,
       paintType: "",
-      woodType: "خشب زان أحمر",
-      color: "أوف وايت ناعم",
-      duration: "10 أيام",
+      woodType: "",
+      color: "",
+      duration: "",
       isFeatured: true,
       images: []
     });
@@ -273,7 +273,7 @@ export default function AdminPage() {
       code: proj.code || "",
       desc: proj.desc || "",
       folderId: proj.folderId || folders[0]?.id || "",
-      paintType: proj.paintType || "",
+      paintType: (proj.paintType || "").replace(/دوكو فرن\s*(إيطالي|مط)?/g, "").trim(),
       woodType: proj.woodType || "",
       color: proj.color || "",
       duration: proj.duration || "",
@@ -344,11 +344,11 @@ export default function AdminPage() {
       title: projectForm.title.trim(),
       code: projectForm.code.trim().toUpperCase() || `WOOD-${Math.floor(100 + Math.random() * 900)}`,
       desc: projectForm.desc.trim(),
-      folderId: projectForm.folderId || folders[0]?.id || "bedrooms",
-      paintType: projectForm.paintType.trim() || "",
-      woodType: projectForm.woodType.trim() || "خشب زان أحمر",
-      color: projectForm.color.trim() || "",
-      duration: projectForm.duration.trim() || "",
+      folderId: projectForm.folderId || folders[0]?.id || "",
+      paintType: projectForm.paintType.trim().replace(/دوكو فرن\s*(إيطالي|مط)?/g, "").trim(),
+      woodType: projectForm.woodType.trim(),
+      color: projectForm.color.trim(),
+      duration: projectForm.duration.trim(),
       isFeatured: !!projectForm.isFeatured,
       images: finalImages
     };
@@ -883,7 +883,7 @@ export default function AdminPage() {
               </div>
 
               {/* Finish Specs */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-wood-muted font-black mb-1">نوع الدهان والتشطيب</label>
                   <input
@@ -901,10 +901,33 @@ export default function AdminPage() {
                     type="text"
                     value={projectForm.woodType}
                     onChange={(e) => setProjectForm({ ...projectForm, woodType: e.target.value })}
-                    placeholder="خشب زان أحمر / قشرة أرو"
+                    placeholder="خشب زان / أرو / موسكي"
                     className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3 py-2 text-wood-cream font-bold outline-none focus:border-wood-amber"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-wood-muted font-black mb-1">درجة اللون واللمعان (اختياري)</label>
+                  <input
+                    type="text"
+                    value={projectForm.color}
+                    onChange={(e) => setProjectForm({ ...projectForm, color: e.target.value })}
+                    placeholder="مثال: أوف وايت / بني جوزي / مط"
+                    className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3 py-2 text-wood-cream font-bold outline-none focus:border-wood-amber"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-wood-muted font-black mb-1">تفاصيل ووصف العمل (اختياري)</label>
+                <textarea
+                  rows={2}
+                  value={projectForm.desc}
+                  onChange={(e) => setProjectForm({ ...projectForm, desc: e.target.value })}
+                  placeholder="اكتب تفاصيل إضافية عن نوعية الشغل ومراحل التشطيب..."
+                  className="w-full bg-wood-850 border border-wood-700 rounded-xl p-3 text-wood-cream font-bold outline-none focus:border-wood-amber leading-relaxed"
+                />
               </div>
 
               {/* ── DEVICE IMAGE UPLOAD SECTION ──────────────────────── */}
