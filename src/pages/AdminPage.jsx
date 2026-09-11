@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
+import { auth } from '../firebase/config';
+import { 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  sendPasswordResetEmail
+} from 'firebase/auth';
 import { 
   ShieldCheck, 
   Lock, 
@@ -13,6 +20,7 @@ import {
   Save, 
   X, 
   Eye, 
+  EyeOff,
   CheckCircle2, 
   AlertCircle,
   FolderTree,
@@ -24,7 +32,10 @@ import {
   Check,
   Star,
   Loader2,
-  Settings
+  Settings,
+  Mail,
+  KeyRound,
+  LogOut
 } from 'lucide-react';
 
 // Helper: Compress image to optimized JPEG Data URL via HTML5 Canvas (Fail-safe for Mobile & Large Photos)
@@ -94,10 +105,18 @@ export default function AdminPage() {
     deleteFolder 
   } = usePortfolio();
 
-  // Authentication State
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pinInput, setPinInput] = useState("");
-  const [pinError, setPinError] = useState("");
+  // ── Authentication State (Firebase Auth) ────────────────
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [emailInput, setEmailInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+
+  // Password Reset State
+  const [isResetMode, setIsResetMode] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState("");
 
   // Tabs: 'projects' | 'folders'
   const [activeTab, setActiveTab] = useState("projects");
@@ -139,31 +158,98 @@ export default function AdminPage() {
   // Action notification toast
   const [actionStatus, setActionStatus] = useState("");
 
-  // Check existing session
+  // Firebase Auth State Listener
   useEffect(() => {
-    const session = sessionStorage.getItem("wood_admin_auth");
-    if (session === "true") setIsAuthenticated(true);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setIsAuthChecking(false);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (pinInput === "1234") {
-      setIsAuthenticated(true);
-      sessionStorage.setItem("wood_admin_auth", "true");
-      setPinError("");
-    } else {
-      setPinError("رمز الدخول غير صحيح! الرمز الافتراضي هو 1234");
+  // Helper for translating Firebase Auth errors to clear Arabic
+  const formatAuthError = (errCode) => {
+    switch (errCode) {
+      case 'auth/invalid-email':
+        return 'صيغة البريد الإلكتروني غير صحيحة.';
+      case 'auth/user-disabled':
+        return 'تم تعطيل هذا الحساب من قبل المسؤول.';
+      case 'auth/user-not-found':
+        return 'لا يوجد حساب مسجل بهذا البريد الإلكتروني.';
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        return 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+      case 'auth/too-many-requests':
+        return 'تم حظر الدخول مؤقتاً بسبب كثرة المحاولات الخاطئة. حاول لاحقاً.';
+      case 'auth/network-request-failed':
+        return 'تعذر الاتصال بالشبكة. يرجى التحقق من اتصال الإنترنت.';
+      case 'auth/missing-password':
+        return 'يرجى إدخال كلمة المرور.';
+      default:
+        return 'حدث خطأ أثناء تسجيل الدخول: ' + (errCode || 'حاول مجدداً');
     }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    sessionStorage.removeItem("wood_admin_auth");
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+    setResetSuccess("");
+
+    if (!emailInput.trim() || !passwordInput) {
+      setAuthError("يرجى كتابة البريد الإلكتروني وكلمة المرور.");
+      return;
+    }
+
+    setAuthLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, emailInput.trim(), passwordInput);
+      setAuthError("");
+    } catch (err) {
+      console.error("Firebase Login Error:", err);
+      setAuthError(formatAuthError(err.code));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+    setResetSuccess("");
+
+    if (!emailInput.trim()) {
+      setAuthError("يرجى كتابة بريدك الإلكتروني لإرسال رابط استعادة كلمة المرور.");
+      return;
+    }
+
+    setAuthLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, emailInput.trim());
+      setResetSuccess("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني بنجاح.");
+    } catch (err) {
+      console.error("Firebase Reset Error:", err);
+      setAuthError(formatAuthError(err.code));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error("Firebase SignOut Error:", err);
+    }
   };
 
   // ── Project Modal Handlers ───────────────────────────────
   const openAddProject = () => {
-    const defaultFolder = folders[0]?.id || "bedrooms";
+    if (folders.length === 0) {
+      alert("يرجى إنشاء قسم أولاً من تبويب 'إدارة الأقسام' قبل إضافة أعمال جديدة.");
+      setActiveTab("folders");
+      return;
+    }
+    const defaultFolder = folders[0]?.id || "";
     const defaultSub = folders[0]?.subcategories?.[0]?.id || "";
     setEditingProject(null);
     setProjectFormError("");
@@ -373,41 +459,181 @@ export default function AdminPage() {
     }
   };
 
-  // ── PIN LOGIN SCREEN ─────────────────────────────────────
-  if (!isAuthenticated) {
+  // ── FIREBASE AUTH CHECKING SCREEN ───────────────────────
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#0F0D0B] text-wood-cream">
+        <Loader2 className="w-10 h-10 text-wood-amber animate-spin mb-3" />
+        <p className="text-xs font-bold text-wood-muted">جاري التحقق من هوية المسؤول...</p>
+      </div>
+    );
+  }
+
+  // ── FIREBASE LOGIN SCREEN ────────────────────────────────
+  if (!currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#0F0D0B]">
-        <div className="w-full max-w-sm glass-card p-7 rounded-3xl border border-wood-700/80 shadow-2xl text-center bg-wood-850/95">
+        <div className="w-full max-w-md glass-card p-8 rounded-3xl border border-wood-700/80 shadow-2xl bg-wood-850/95">
           
-          <div className="w-16 h-16 rounded-2xl bg-wood-amber/20 border border-wood-amber/40 flex items-center justify-center text-wood-amber mx-auto mb-4 shadow-inner">
-            <Lock className="w-8 h-8 stroke-[2.5]" />
+          {/* Logo / Header */}
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-wood-amber/20 border border-wood-amber/40 flex items-center justify-center text-wood-amber mx-auto mb-4 shadow-inner">
+              <ShieldCheck className="w-8 h-8 stroke-[2.5]" />
+            </div>
+            <h2 className="text-xl font-black font-alexandria text-wood-cream">لوحة إدارة المعرض</h2>
+            <p className="text-xs font-bold text-wood-muted mt-1">
+              {isResetMode ? "استعادة كلمة المرور عبر البريد الإلكتروني" : "تسجيل الدخول للمسؤول عبر Firebase"}
+            </p>
           </div>
 
-          <h2 className="text-xl font-black font-alexandria text-wood-cream">لوحة إدارة المعرض</h2>
-          <p className="text-xs font-bold text-wood-muted mt-1 mb-6">أدخل رمز الدخول لإضافة وتعديل الأقسام والأعمال</p>
+          {/* Success Banner */}
+          {resetSuccess && (
+            <div className="mb-5 p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-start gap-3 text-emerald-300 text-xs font-bold">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+              <span>{resetSuccess}</span>
+            </div>
+          )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="password"
-              value={pinInput}
-              onChange={(e) => setPinInput(e.target.value)}
-              placeholder="رمز الدخول (الافتراضي: 1234)"
-              className="w-full bg-wood-900 border border-wood-700 rounded-xl px-4 py-3 text-center text-wood-cream placeholder:text-wood-muted/50 text-sm font-black outline-none focus:border-wood-amber"
-            />
-            
-            {pinError && <p className="text-xs text-rose-400 font-black">{pinError}</p>}
+          {/* Error Banner */}
+          {authError && (
+            <div className="mb-5 p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-start gap-3 text-rose-300 text-xs font-bold">
+              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+              <span>{authError}</span>
+            </div>
+          )}
 
-            <button
-              type="submit"
-              className="w-full py-3.5 rounded-xl bg-wood-amber hover:bg-wood-gold active:bg-wood-amber text-white font-black text-sm shadow-lg shadow-wood-amber/30 transition-all active:scale-95"
-            >
-              تسجيل الدخول
-            </button>
-          </form>
+          {!isResetMode ? (
+            /* Login Form */
+            <form onSubmit={handleLogin} className="space-y-4">
+              {/* Email Input */}
+              <div>
+                <label className="block text-xs font-black text-wood-cream mb-1.5 text-right">
+                  البريد الإلكتروني
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder="admin@example.com"
+                    dir="ltr"
+                    className="w-full bg-wood-900 border border-wood-700 rounded-xl px-4 py-3 pl-11 text-wood-cream placeholder:text-wood-muted/40 text-sm font-semibold outline-none focus:border-wood-amber transition-colors text-left"
+                    required
+                  />
+                  <Mail className="w-5 h-5 text-wood-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
+                </div>
+              </div>
 
-          <Link to="/" className="inline-block mt-5 text-xs font-black text-wood-muted hover:text-wood-cream transition-colors">
-            ← العودة للمعرض الرئيسي
-          </Link>
+              {/* Password Input */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-black text-wood-cream">
+                    كلمة المرور
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsResetMode(true);
+                      setAuthError("");
+                      setResetSuccess("");
+                    }}
+                    className="text-[11px] font-black text-wood-amber hover:underline"
+                  >
+                    نسيت كلمة المرور؟
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    placeholder="••••••••"
+                    dir="ltr"
+                    className="w-full bg-wood-900 border border-wood-700 rounded-xl px-4 py-3 pr-11 text-wood-cream placeholder:text-wood-muted/40 text-sm font-semibold outline-none focus:border-wood-amber transition-colors text-left"
+                    required
+                  />
+                  <KeyRound className="w-5 h-5 text-wood-muted absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-wood-muted hover:text-wood-cream transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="w-full py-3.5 rounded-xl bg-wood-amber hover:bg-wood-gold active:bg-wood-amber text-white font-black text-sm shadow-lg shadow-wood-amber/30 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
+              >
+                {authLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>جاري التحقق...</span>
+                  </>
+                ) : (
+                  <span>تسجيل الدخول</span>
+                )}
+              </button>
+            </form>
+          ) : (
+            /* Reset Password Form */
+            <form onSubmit={handlePasswordReset} className="space-y-4">
+              <div>
+                <label className="block text-xs font-black text-wood-cream mb-1.5 text-right">
+                  أدخل بريدك الإلكتروني المسجل
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder="admin@example.com"
+                    dir="ltr"
+                    className="w-full bg-wood-900 border border-wood-700 rounded-xl px-4 py-3 pl-11 text-wood-cream placeholder:text-wood-muted/40 text-sm font-semibold outline-none focus:border-wood-amber transition-colors text-left"
+                    required
+                  />
+                  <Mail className="w-5 h-5 text-wood-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="w-full py-3.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-black text-sm shadow-lg shadow-wood-amber/30 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {authLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>جاري الإرسال...</span>
+                  </>
+                ) : (
+                  <span>إرسال رابط إعادة التعيين</span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsResetMode(false);
+                  setAuthError("");
+                  setResetSuccess("");
+                }}
+                className="w-full text-xs font-black text-wood-muted hover:text-wood-cream text-center pt-2 transition-colors"
+              >
+                ← العودة لنموذج تسجيل الدخول
+              </button>
+            </form>
+          )}
+
+          <div className="mt-6 pt-5 border-t border-wood-700/60 text-center">
+            <Link to="/" className="text-xs font-black text-wood-muted hover:text-wood-cream transition-colors">
+              ← العودة للمعرض الرئيسي
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -426,7 +652,9 @@ export default function AdminPage() {
             </div>
             <div>
               <h1 className="font-alexandria font-black text-sm sm:text-base text-wood-cream">لوحة تحكم المعرض</h1>
-              <span className="text-[11px] font-bold text-emerald-400">● مزامن لحظياً مع قاعدة البيانات</span>
+              <span className="text-[11px] font-bold text-emerald-400 block sm:inline">
+                ● {currentUser.email || "مسؤول المعرض"}
+              </span>
             </div>
           </div>
 
@@ -441,9 +669,11 @@ export default function AdminPage() {
 
             <button
               onClick={handleLogout}
-              className="px-3.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-xs font-black border border-rose-500/30 transition-all"
+              className="flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-xs font-black border border-rose-500/30 transition-all"
+              title="تسجيل الخروج"
             >
-              خروج
+              <LogOut className="w-3.5 h-3.5" />
+              <span>خروج</span>
             </button>
           </div>
         </div>
