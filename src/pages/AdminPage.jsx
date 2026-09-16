@@ -872,8 +872,8 @@ export default function AdminPage() {
 
       {/* ── PROJECT ADD/EDIT MODAL ───────────────────────────────────── */}
       {projectModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-xl glass-wood rounded-3xl border border-wood-700 p-6 my-8 shadow-2xl bg-wood-900">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center overflow-y-auto px-4 pt-14 sm:pt-10 pb-28">
+          <div className="w-full max-w-xl glass-wood rounded-3xl border border-wood-700 p-5 sm:p-6 shadow-2xl bg-wood-900">
             <div className="flex items-center justify-between pb-4 border-b border-wood-700 mb-5">
               <h3 className="font-alexandria font-black text-base text-wood-cream">
                 {editingProject ? "تعديل بيانات العمل" : "إضافة عمل جديد للمعرض"}
@@ -898,7 +898,6 @@ export default function AdminPage() {
                   type="text"
                   value={projectForm.title}
                   onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
-                  placeholder="مثال: غرفة نوم ماستر كلاسيك"
                   className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-bold outline-none focus:border-wood-amber"
                 />
               </div>
@@ -925,7 +924,6 @@ export default function AdminPage() {
                     type="text"
                     value={projectForm.paintType}
                     onChange={(e) => setProjectForm({ ...projectForm, paintType: e.target.value })}
-                    placeholder="مثال: إستر / قشرة أرو / لاكيه"
                     className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3 py-2 text-wood-cream font-bold outline-none focus:border-wood-amber"
                   />
                 </div>
@@ -936,7 +934,6 @@ export default function AdminPage() {
                     type="text"
                     value={projectForm.woodType}
                     onChange={(e) => setProjectForm({ ...projectForm, woodType: e.target.value })}
-                    placeholder="خشب زان / أرو / موسكي"
                     className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3 py-2 text-wood-cream font-bold outline-none focus:border-wood-amber"
                   />
                 </div>
@@ -947,7 +944,6 @@ export default function AdminPage() {
                     type="text"
                     value={projectForm.color}
                     onChange={(e) => setProjectForm({ ...projectForm, color: e.target.value })}
-                    placeholder="مثال: أوف وايت / بني جوزي / مط"
                     className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3 py-2 text-wood-cream font-bold outline-none focus:border-wood-amber"
                   />
                 </div>
@@ -960,7 +956,6 @@ export default function AdminPage() {
                   rows={2}
                   value={projectForm.desc}
                   onChange={(e) => setProjectForm({ ...projectForm, desc: e.target.value })}
-                  placeholder="اكتب تفاصيل إضافية عن نوعية الشغل ومراحل التشطيب..."
                   className="w-full bg-wood-850 border border-wood-700 rounded-xl p-3 text-wood-cream font-bold outline-none focus:border-wood-amber leading-relaxed"
                 />
               </div>
@@ -1086,8 +1081,8 @@ export default function AdminPage() {
 
       {/* ── FOLDER / SECTION ADD/EDIT MODAL ──────────────────────────── */}
       {folderModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-lg glass-wood rounded-3xl border border-wood-700 p-6 shadow-2xl bg-wood-900">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center overflow-y-auto px-4 pt-14 sm:pt-10 pb-28">
+          <div className="w-full max-w-lg glass-wood rounded-3xl border border-wood-700 p-5 sm:p-6 shadow-2xl bg-wood-900">
             <div className="flex items-center justify-between pb-4 border-b border-wood-700 mb-5">
               <h3 className="font-alexandria font-black text-base text-wood-cream">
                 {editingFolder ? "تعديل القسم" : "إضافة قسم جديد"}
@@ -1111,7 +1106,6 @@ export default function AdminPage() {
                   type="text"
                   value={folderForm.name}
                   onChange={(e) => setFolderForm({ ...folderForm, name: e.target.value })}
-                  placeholder="مثال: غرف نوم ماستر"
                   className="w-full bg-wood-850 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-bold outline-none focus:border-wood-amber"
                 />
               </div>
