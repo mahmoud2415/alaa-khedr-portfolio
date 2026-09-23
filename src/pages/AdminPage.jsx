@@ -43,7 +43,8 @@ import {
   RefreshCw,
   Database,
   ExternalLink,
-  CheckCircle
+  CheckCircle,
+  HelpCircle
 } from 'lucide-react';
 import { 
   uploadToCloudinary, 
