@@ -20,25 +20,37 @@ import {
   Save, 
   X, 
   Eye, 
-  EyeOff,
+  EyeOff, 
   CheckCircle2, 
-  AlertCircle,
-  FolderTree,
-  Phone,
-  MessageCircle,
-  Home,
-  ImagePlus,
-  UploadCloud,
-  Check,
-  Star,
-  Loader2,
-  Settings,
-  Mail,
-  KeyRound,
-  LogOut,
-  ArrowUp,
-  ArrowDown
+  AlertCircle, 
+  FolderTree, 
+  Phone, 
+  MessageCircle, 
+  Home, 
+  ImagePlus, 
+  UploadCloud, 
+  Check, 
+  Star, 
+  Loader2, 
+  Settings, 
+  Mail, 
+  KeyRound, 
+  LogOut, 
+  ArrowUp, 
+  ArrowDown,
+  Cloud,
+  CloudUpload,
+  RefreshCw,
+  Database,
+  ExternalLink,
+  CheckCircle
 } from 'lucide-react';
+import { 
+  uploadToCloudinary, 
+  isBase64Image, 
+  getCloudinaryConfig, 
+  saveCustomCloudinaryConfig 
+} from '../services/cloudinary';
 
 // Helper: Compress image to optimized JPEG Data URL via HTML5 Canvas (Fail-safe for Mobile & Large Photos)
 const compressImage = (file, maxWidth = 800, quality = 0.65) => {
@@ -121,8 +133,21 @@ export default function AdminPage() {
   const [isResetMode, setIsResetMode] = useState(false);
   const [resetSuccess, setResetSuccess] = useState("");
 
-  // Tabs: 'projects' | 'folders'
+  // Tabs: 'projects' | 'folders' | 'settings'
   const [activeTab, setActiveTab] = useState("projects");
+
+  // Cloudinary Config State
+  const [cloudNameInput, setCloudNameInput] = useState(() => getCloudinaryConfig().cloudName);
+  const [presetInput, setPresetInput] = useState(() => getCloudinaryConfig().uploadPreset);
+  const [configToast, setConfigToast] = useState("");
+
+  // Migration State
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationStatus, setMigrationStatus] = useState("");
+  const [migrationProgress, setMigrationProgress] = useState(0);
+
+  // Upload Progress
+  const [uploadStatusText, setUploadStatusText] = useState("");
 
   // Project Modal State
   const [projectModalOpen, setProjectModalOpen] = useState(false);
@@ -291,22 +316,37 @@ export default function AdminPage() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
+    const config = getCloudinaryConfig();
+    if (!config.cloudName || !config.uploadPreset) {
+      setProjectFormError("يرجى إدخال Cloud Name و Upload Preset في تبويب 'إعدادات CDN' أولاً لرفع الصور إلى السحابة.");
+      return;
+    }
+
     setIsProcessingImages(true);
     setProjectFormError("");
+    setUploadStatusText(`جاري تجهيز ${files.length} صورة...`);
+
     try {
-      const compressedList = await Promise.all(
-        files.map(file => compressImage(file, 850, 0.68))
-      );
+      const uploadedUrls = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setUploadStatusText(`جاري ضغط ورفع صورة (${i + 1} من ${files.length}) إلى Cloudinary CDN...`);
+        const compressedBase64 = await compressImage(file, 1400, 0.82);
+        const cdnUrl = await uploadToCloudinary(compressedBase64 || file);
+        uploadedUrls.push(cdnUrl);
+      }
+
       setProjectForm(prev => ({
         ...prev,
-        images: [...prev.images, ...compressedList]
+        images: [...prev.images, ...uploadedUrls]
       }));
     } catch (err) {
-      console.error("Error compressing images:", err);
-      setProjectFormError("حدث خطأ أثناء معالجة الصور من الجهاز.");
+      console.error("Error uploading project images:", err);
+      setProjectFormError("حدث خطأ أثناء الرفع إلى Cloudinary: " + (err.message || "حاول مجدداً"));
     } finally {
       setIsProcessingImages(false);
-      e.target.value = ""; // reset input
+      setUploadStatusText("");
+      e.target.value = "";
     }
   };
 
@@ -400,17 +440,109 @@ export default function AdminPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const config = getCloudinaryConfig();
+    if (!config.cloudName || !config.uploadPreset) {
+      setFolderFormError("يرجى إدخال Cloud Name و Upload Preset في تبويب 'إعدادات CDN' أولاً لرفع الصور إلى السحابة.");
+      return;
+    }
+
     setIsProcessingFolderImage(true);
     setFolderFormError("");
     try {
-      const dataUrl = await compressImage(file, 850, 0.68);
-      setFolderForm(prev => ({ ...prev, image: dataUrl }));
+      const compressedBase64 = await compressImage(file, 1000, 0.82);
+      const cdnUrl = await uploadToCloudinary(compressedBase64 || file);
+      setFolderForm(prev => ({ ...prev, image: cdnUrl }));
     } catch (err) {
-      console.error("Error compressing folder image:", err);
-      setFolderFormError("حدث خطأ أثناء معالجة صورة القسم.");
+      console.error("Error uploading folder image:", err);
+      setFolderFormError("حدث خطأ أثناء رفع صورة القسم إلى Cloudinary: " + (err.message || "حاول مجدداً"));
     } finally {
       setIsProcessingFolderImage(false);
       e.target.value = "";
+    }
+  };
+
+  // ── Cloudinary Settings & Base64 Migration Handlers ───────
+  const handleSaveCloudinarySettings = (e) => {
+    e.preventDefault();
+    saveCustomCloudinaryConfig(cloudNameInput, presetInput);
+    setConfigToast("تم حفظ إعدادات Cloudinary بنجاح! جاهز لرفع الصور.");
+    setTimeout(() => setConfigToast(""), 4000);
+  };
+
+  const handleMigrateBase64Images = async () => {
+    const config = getCloudinaryConfig();
+    if (!config.cloudName || !config.uploadPreset) {
+      alert("يرجى إدخال وحفظ بيانات Cloud Name و Upload Preset أولاً قبل بدء الترحيل.");
+      return;
+    }
+
+    // Identify items needing migration
+    const projectsWithBase64 = projects.filter(p => (p.images || []).some(isBase64Image));
+    const foldersWithBase64 = folders.filter(f => isBase64Image(f.image));
+
+    let totalImagesToMigrate = 0;
+    projectsWithBase64.forEach(p => {
+      totalImagesToMigrate += (p.images || []).filter(isBase64Image).length;
+    });
+    totalImagesToMigrate += foldersWithBase64.length;
+
+    if (totalImagesToMigrate === 0) {
+      alert("رائع! جميع الصور في المعرض مستضافة على روابط CDN سريعة ولا توجد أي صور Base64 تحتاج لترحيل. 🎉");
+      return;
+    }
+
+    if (!confirm(`تم العثور على ${totalImagesToMigrate} صورة Base64 مخزنة داخل قاعدة البيانات.\n\nهل تريد بدء ترحيلها إلى Cloudinary الآن؟`)) {
+      return;
+    }
+
+    setIsMigrating(true);
+    let migratedCount = 0;
+    setMigrationStatus(`بدء الترحيل... (0 من ${totalImagesToMigrate})`);
+    setMigrationProgress(0);
+
+    try {
+      // 1. Migrate Folders
+      for (const folder of foldersWithBase64) {
+        if (isBase64Image(folder.image)) {
+          setMigrationStatus(`جاري ترحيل صورة قسم "${folder.name}" (${migratedCount + 1}/${totalImagesToMigrate})...`);
+          const newUrl = await uploadToCloudinary(folder.image);
+          await saveFolder({ ...folder, image: newUrl }, folder.id);
+          migratedCount++;
+          setMigrationProgress(Math.round((migratedCount / totalImagesToMigrate) * 100));
+        }
+      }
+
+      // 2. Migrate Projects
+      for (const project of projectsWithBase64) {
+        const updatedImages = [];
+        for (const img of (project.images || [])) {
+          if (isBase64Image(img)) {
+            setMigrationStatus(`جاري ترحيل صورة لعمل "${project.title}" (${migratedCount + 1}/${totalImagesToMigrate})...`);
+            const newUrl = await uploadToCloudinary(img);
+            updatedImages.push(newUrl);
+            migratedCount++;
+            setMigrationProgress(Math.round((migratedCount / totalImagesToMigrate) * 100));
+          } else {
+            updatedImages.push(img);
+          }
+        }
+        await saveProject({ ...project, images: updatedImages }, project.id);
+      }
+
+      // 3. Clear bloated old LocalStorage caches
+      try {
+        localStorage.removeItem('wood_projects_v2');
+        localStorage.removeItem('wood_folders_v2');
+      } catch(e) {}
+
+      setMigrationStatus(`✅ تم ترحيل ${migratedCount} صورة بنجاح إلى Cloudinary وتحديث قاعدة البيانات بالكامل!`);
+      setActionStatus(`🎉 تم تحويل جميع الصور إلى Cloudinary CDN بنجاح!`);
+      setTimeout(() => setActionStatus(""), 6000);
+    } catch (err) {
+      console.error("Migration error:", err);
+      setMigrationStatus(`❌ حدث خطأ أثناء الترحيل: ${err.message}`);
+    } finally {
+      setIsMigrating(false);
     }
   };
 
@@ -687,6 +819,16 @@ export default function AdminPage() {
             <FolderTree className="w-4 h-4 stroke-[2.5]" />
             <span>أقسام المعرض ({folders.length})</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black whitespace-nowrap transition-all ${
+              activeTab === "settings" ? "bg-wood-amber text-white shadow-lg shadow-wood-amber/20" : "bg-wood-850 text-wood-muted hover:text-wood-cream border border-wood-700/60"
+            }`}
+          >
+            <Cloud className="w-4 h-4 stroke-[2.5]" />
+            <span>السحابة و CDN {projects.reduce((acc, p) => acc + (p.images?.filter(isBase64Image).length || 0), 0) + folders.filter(f => isBase64Image(f.image)).length > 0 ? '(⚠️ ترحيل)' : '(جاهز)'}</span>
+          </button>
         </div>
 
         {actionStatus && (
@@ -870,6 +1012,207 @@ export default function AdminPage() {
         </main>
       )}
 
+      {/* ── TAB 3: CLOUDINARY & CDN SETTINGS ──────────────────────── */}
+      {activeTab === "settings" && (
+        <main className="max-w-4xl mx-auto px-4 pt-6 space-y-6">
+          
+          {/* Section Header */}
+          <div>
+            <h2 className="font-alexandria font-black text-base sm:text-lg text-wood-cream flex items-center gap-2">
+              <Cloud className="w-5 h-5 text-wood-amber" />
+              <span>إعدادات التخزين السحابي و CDN (Cloudinary)</span>
+            </h2>
+            <p className="text-xs text-wood-muted font-bold mt-1">
+              إدارة ربط صور المعرض بـ Cloudinary CDN لتسريع التصفح وتفادي استهلاك مساحة الذاكرة.
+            </p>
+          </div>
+
+          {/* Config Card */}
+          <div className="glass-card rounded-2xl border border-wood-700/70 p-6 bg-wood-850/90 shadow-xl space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-wood-700/60">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-wood-amber/20 text-wood-amber flex items-center justify-center font-black">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-alexandria font-black text-sm text-wood-cream">بيانات الاتصال بـ Cloudinary</h3>
+                  <p className="text-[11px] text-wood-muted font-bold">يمكنك إدخال بيانات حسابك هنا مباشرة وسيتم حفظها للعمل فوراً</p>
+                </div>
+              </div>
+            </div>
+
+            {configToast && (
+              <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-black text-xs flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{configToast}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveCloudinarySettings} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-wood-muted font-black mb-1.5">
+                    Cloud Name *
+                  </label>
+                  <input
+                    type="text"
+                    dir="ltr"
+                    placeholder="e.g. dxyz1234"
+                    value={cloudNameInput}
+                    onChange={(e) => setCloudNameInput(e.target.value)}
+                    className="w-full bg-wood-900 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-mono font-bold outline-none focus:border-wood-amber transition-all"
+                  />
+                  <span className="text-[10px] text-wood-muted mt-1 block">اسم السحابة / الحساب في Cloudinary</span>
+                </div>
+
+                <div>
+                  <label className="block text-wood-muted font-black mb-1.5">
+                    Upload Preset (Unsigned) *
+                  </label>
+                  <input
+                    type="text"
+                    dir="ltr"
+                    placeholder="e.g. alaa_portfolio_preset"
+                    value={presetInput}
+                    onChange={(e) => setPresetInput(e.target.value)}
+                    className="w-full bg-wood-900 border border-wood-700 rounded-xl px-3.5 py-2.5 text-wood-cream font-mono font-bold outline-none focus:border-wood-amber transition-all"
+                  />
+                  <span className="text-[10px] text-wood-muted mt-1 block">الـ Preset المحدد كـ Unsigned لرفع الصور من المتصفح</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <a
+                  href="https://cloudinary.com/console"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-wood-amber hover:underline text-xs font-black flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>فتح لوحة تحكم Cloudinary Console</span>
+                </a>
+
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-black text-xs shadow-lg shadow-wood-amber/20 active:scale-95 transition-all flex items-center gap-1.5"
+                >
+                  <Save className="w-4 h-4 stroke-[2.5]" />
+                  <span>حفظ إعدادات الربط</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Migration Tool Card */}
+          <div className="glass-card rounded-2xl border border-wood-700/70 p-6 bg-wood-850/90 shadow-xl space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-wood-700/60">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black">
+                  <RefreshCw className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-alexandria font-black text-sm text-wood-cream">أداة ترحيل الصور القديمة (Base64 Migration)</h3>
+                  <p className="text-[11px] text-wood-muted font-bold">فحص المعرض وتحويل أي صور مخزنة مسبقاً بصيغة Base64 إلى روابط CDN سريعة</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Overview */}
+            {(() => {
+              const base64InProjects = projects.reduce((acc, p) => acc + (p.images?.filter(isBase64Image).length || 0), 0);
+              const base64InFolders = folders.filter(f => isBase64Image(f.image)).length;
+              const totalBase64 = base64InProjects + base64InFolders;
+              const totalProjectsImages = projects.reduce((acc, p) => acc + (p.images?.length || 0), 0);
+              const totalCdn = (totalProjectsImages - base64InProjects) + (folders.length - base64InFolders);
+
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="p-3.5 rounded-xl bg-wood-900/90 border border-wood-700/60">
+                      <span className="text-[11px] text-wood-muted font-black block">صور Base64 المتبقية</span>
+                      <strong className={`text-lg font-black font-mono ${totalBase64 > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                        {totalBase64} صور
+                      </strong>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-wood-900/90 border border-wood-700/60">
+                      <span className="text-[11px] text-wood-muted font-black block">صور CDN سريعة</span>
+                      <strong className="text-lg font-black font-mono text-emerald-400">
+                        {totalCdn} صور
+                      </strong>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-wood-900/90 border border-wood-700/60 col-span-2 sm:col-span-1">
+                      <span className="text-[11px] text-wood-muted font-black block">حالة المعرض</span>
+                      <strong className={`text-xs font-black block mt-1 ${totalBase64 === 0 ? 'text-emerald-400' : 'text-amber-300'}`}>
+                        {totalBase64 === 0 ? '✅ ممتاز، لا توجد صور Base64' : '⚠️ يحتاج ترحيل إلى السحابة'}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* Migration Status message */}
+                  {migrationStatus && (
+                    <div className="p-4 rounded-xl bg-wood-900 border border-wood-700/80 space-y-2">
+                      <p className="text-xs font-black text-wood-cream flex items-center gap-2">
+                        {isMigrating && <Loader2 className="w-4 h-4 text-wood-amber animate-spin" />}
+                        <span>{migrationStatus}</span>
+                      </p>
+                      {isMigrating && (
+                        <div className="w-full bg-wood-800 rounded-full h-2.5 overflow-hidden">
+                          <div
+                            className="bg-wood-amber h-2.5 rounded-full transition-all duration-300"
+                            style={{ width: `${migrationProgress}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={handleMigrateBase64Images}
+                      disabled={isMigrating}
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-wood-amber hover:bg-wood-gold text-white font-black text-xs shadow-lg shadow-wood-amber/20 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95"
+                    >
+                      {isMigrating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>جاري الترحيل ورفع الصور...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CloudUpload className="w-4 h-4 stroke-[2.5]" />
+                          <span>
+                            {totalBase64 > 0 ? `بدء ترحيل ${totalBase64} صورة إلى Cloudinary الآن` : 'إعادة فحص الصور وتحديث الكاش'}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Quick Setup Instructions */}
+          <div className="p-5 rounded-2xl bg-wood-900/60 border border-wood-700/40 text-xs space-y-2 text-wood-muted">
+            <h4 className="font-alexandria font-black text-wood-cream text-xs flex items-center gap-1.5">
+              <HelpCircle className="w-4 h-4 text-wood-amber" />
+              <span>كيفية إنشاء Unsigned Upload Preset في دقيقة واحدة مجاناً:</span>
+            </h4>
+            <ol className="list-decimal list-inside space-y-1 text-[11px] leading-relaxed pr-2 font-bold">
+              <li>سجل دخولك في <strong className="text-wood-cream">cloudinary.com</strong></li>
+              <li>انتقل إلى <strong className="text-wood-cream">Settings (رمز الترس)</strong> ثم اضغط على <strong className="text-wood-cream">Upload</strong></li>
+              <li>انزل لأسفل واضغط على <strong className="text-wood-cream">Add upload preset</strong></li>
+              <li>غيّر خيار <strong className="text-wood-cream">Signing Mode</strong> من Signed إلى <strong className="text-amber-400">Unsigned</strong></li>
+              <li>احفظ وانسخ اسم الـ Preset وضعه في الحقل بالأعلى مع اسم الـ Cloud Name الخاص بك.</li>
+            </ol>
+          </div>
+
+        </main>
+      )}
+
       {/* ── PROJECT ADD/EDIT MODAL ───────────────────────────────────── */}
       {projectModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-start justify-center overflow-y-auto px-4 pt-14 sm:pt-10 pb-28">
@@ -983,7 +1326,7 @@ export default function AdminPage() {
                   {isProcessingImages ? (
                     <div className="flex items-center gap-2 text-wood-amber font-black py-2">
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>جاري معالجة وضغط الصور...</span>
+                      <span>{uploadStatusText || "جاري معالجة ورفع الصور إلى Cloudinary..."}</span>
                     </div>
                   ) : (
                     <>
